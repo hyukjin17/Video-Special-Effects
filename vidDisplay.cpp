@@ -39,15 +39,13 @@ int main(int argc, char *argv[]) {
         if (imgType == 'c') mod = frame;
         else if (imgType == 'g') cvtColor(frame, mod, cv::COLOR_BGR2GRAY); // convert to grayscale image
 
-        cv::imshow("Live Video", dest);
+        cv::imshow("Live Video", mod);
 
         // see if there is a waiting keystroke
         char key = cv::waitKey(10);
-        switch (key) {
-            case 'q': break;
-            case 'g': imgType = 'g';
-            case 'c': imgType = 'c';
-        }
+        if (key == 'q') break;
+        else if (key == 'g') imgType = 'g';
+        else if (key == 'c') imgType = 'c';
     }
 
     delete capdev;
