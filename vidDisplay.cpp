@@ -35,10 +35,11 @@ int main(int argc, char *argv[]) {
             break;
         }
 
-        if (imgType == 'c') cv::imshow("Video", frame);
+        if (imgType == 'c') cv::imshow("Live Video", frame);
         else if (imgType == 'g') {
             cv::Mat greyscale;
-            cvtColor(frame, greyscale, COLOR_BGR2GRAY); // convert to grayscale image
+            cvtColor(frame, greyscale, cv::COLOR_BGR2GRAY); // convert to grayscale image
+            cv::imshow("Live Video", greyscale);
         }
 
         // see if there is a waiting keystroke
