@@ -23,7 +23,8 @@ int main(int argc, char *argv[]) {
     printf("Expected size: %d x %d\n", refS.width, refS.height);
 
     cv::namedWindow("Live Video", 1); // identifies a window and automatically sizes it to the image
-    cv::Mat frame;
+    cv::Mat frame; // initial frame
+    cv::Mat mod; // modified frame
     char imgType = 'c'; // sets img type for the video stream (default is color)
 
     for (;;) // infinite loop until break
@@ -35,17 +36,18 @@ int main(int argc, char *argv[]) {
             break;
         }
 
-        if (imgType == 'c') cv::imshow("Live Video", frame);
-        else if (imgType == 'g') {
-            cv::Mat greyscale;
-            cvtColor(frame, greyscale, cv::COLOR_BGR2GRAY); // convert to grayscale image
-            cv::imshow("Live Video", greyscale);
-        }
+        if (imgType == 'c') mod = frame;
+        else if (imgType == 'g') cvtColor(frame, mod, cv::COLOR_BGR2GRAY); // convert to grayscale image
+
+        cv::imshow("Live Video", dest);
 
         // see if there is a waiting keystroke
         char key = cv::waitKey(10);
-        if (key == 'q') break;
-        else if (key == 'g') imgType = 'g';
+        switch (key) {
+            case 'q': break;
+            case 'g': imgType = 'g';
+            case 'c': imgType = 'c';
+        }
     }
 
     delete capdev;
