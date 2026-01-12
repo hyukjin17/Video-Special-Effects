@@ -9,7 +9,7 @@
 int main(int argc, char *argv[]) {
     cv::VideoCapture *capdev;
 
-    // open the video device
+    // open the video device (0 uses the default camera on the device)
     capdev = new cv::VideoCapture(0);
     if (!capdev->isOpened())
     {
@@ -17,30 +17,34 @@ int main(int argc, char *argv[]) {
         return (-1);
     }
 
-    // get some properties of the image
+    // get size properties of the image
     cv::Size refS((int)capdev->get(cv::CAP_PROP_FRAME_WIDTH),
                   (int)capdev->get(cv::CAP_PROP_FRAME_HEIGHT));
-    printf("Expected size: %d %d\n", refS.width, refS.height);
+    printf("Expected size: %d x %d\n", refS.width, refS.height);
 
-    cv::namedWindow("Video", 1); // identifies a window
+    cv::namedWindow("Live Video", 1); // identifies a window and automatically sizes it to the image
     cv::Mat frame;
+    char imgType = 'c'; // sets img type for the video stream (default is color)
 
-    for (;;)
+    for (;;) // infinite loop until break
     {
         *capdev >> frame; // get a new frame from the camera, treat as a stream
         if (frame.empty())
         {
-            printf("frame is empty\n");
+            printf("Frame is empty\n");
             break;
         }
-        cv::imshow("Video", frame);
+
+        if (imgType == 'c') cv::imshow("Video", frame);
+        else if (imgType == 'g') {
+            cv::Mat greyscale;
+            cvtColor(frame, greyscale, COLOR_BGR2GRAY); // convert to grayscale image
+        }
 
         // see if there is a waiting keystroke
         char key = cv::waitKey(10);
-        if (key == 'q')
-        {
-            break;
-        }
+        if (key == 'q') break;
+        else if (key == 'g') imgType = 'g';
     }
 
     delete capdev;
