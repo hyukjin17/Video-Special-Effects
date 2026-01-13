@@ -40,6 +40,7 @@ int sepia(cv::Mat &src, cv::Mat &dst)
         for (int j = 0; j < dst.cols; j++)
         {
             // conversion to sepia tone using a given formula
+            // save original RGB values to avoid modifying them in the future calculations
             uchar red = ptr[j][2];
             uchar green = ptr[j][1];
             uchar blue = ptr[j][0];
