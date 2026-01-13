@@ -6,6 +6,8 @@
 
 #include "opencv2/opencv.hpp"
 
+int greyscale(cv::Mat &src, cv::Mat &dst);
+
 int main(int argc, char *argv[]) {
     cv::VideoCapture *capdev;
 
@@ -36,16 +38,27 @@ int main(int argc, char *argv[]) {
             break;
         }
 
-        if (imgType == 'c') mod = frame;
-        else if (imgType == 'g') cvtColor(frame, mod, cv::COLOR_BGR2GRAY); // convert to grayscale image
-
+        // select which image type to display
+        switch (imgType) {
+            case 'c':
+                mod = frame;
+                break;
+            case 'g':
+                cvtColor(frame, mod, cv::COLOR_BGR2GRAY); // convert to grayscale image
+                break;
+            case 'h':
+                greyscale(frame, mod);
+                break;
+        }
+    
         cv::imshow("Live Video", mod);
 
         // see if there is a waiting keystroke
-        char key = cv::waitKey(10);
+        char key = cv::waitKey(1);
         if (key == 'q') break;
-        else if (key == 'g') imgType = 'g';
-        else if (key == 'c') imgType = 'c';
+        else if (key == 'c') imgType = 'c'; // original color
+        else if (key == 'g') imgType = 'g'; // cvtColor greyscale
+        else if (key == 'h') imgType = 'h'; // alternate greyscale
     }
 
     delete capdev;
