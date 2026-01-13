@@ -7,6 +7,7 @@
 #include "opencv2/opencv.hpp"
 
 int greyscale(cv::Mat &src, cv::Mat &dst);
+int sepia(cv::Mat &src, cv::Mat &dst);
 
 int main(int argc, char *argv[]) {
     cv::VideoCapture *capdev;
@@ -49,6 +50,8 @@ int main(int argc, char *argv[]) {
             case 'h':
                 greyscale(frame, mod);
                 break;
+            case 's':
+                sepia(frame, mod);
         }
     
         cv::imshow("Live Video", mod);
@@ -59,6 +62,7 @@ int main(int argc, char *argv[]) {
         else if (key == 'c') imgType = 'c'; // original color
         else if (key == 'g') imgType = 'g'; // cvtColor greyscale
         else if (key == 'h') imgType = 'h'; // alternate greyscale
+        else if (key == 's') imgType = 's'; // sepia tone
     }
 
     delete capdev;
