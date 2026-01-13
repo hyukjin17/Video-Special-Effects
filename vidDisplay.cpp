@@ -8,6 +8,9 @@
 
 int greyscale(cv::Mat &src, cv::Mat &dst);
 int sepia(cv::Mat &src, cv::Mat &dst);
+int blur5x5_1(cv::Mat &src, cv::Mat &dst);
+int blur5x5_2(cv::Mat &src, cv::Mat &dst);
+
 
 int main(int argc, char *argv[]) {
     cv::VideoCapture *capdev;
@@ -52,6 +55,13 @@ int main(int argc, char *argv[]) {
                 break;
             case 's':
                 sepia(frame, mod);
+                break;
+            case 'b':
+                blur5x5_1(frame, mod);
+                break;
+            case 'B':
+                blur5x5_2(frame, mod);
+                break;
         }
     
         cv::imshow("Live Video", mod);
@@ -63,6 +73,8 @@ int main(int argc, char *argv[]) {
         else if (key == 'g') imgType = 'g'; // cvtColor greyscale
         else if (key == 'h') imgType = 'h'; // alternate greyscale
         else if (key == 's') imgType = 's'; // sepia tone
+        else if (key == 'b') imgType = 'b'; // blur 1
+        else if (key == 'B') imgType = 'B'; // blur 2
     }
 
     delete capdev;

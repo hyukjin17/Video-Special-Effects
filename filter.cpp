@@ -61,3 +61,35 @@ int sepia(cv::Mat &src, cv::Mat &dst)
     }
     return (0);
 }
+
+// 5x5 blur filter using integer approximation of Gaussian
+int blur5x5_1(cv::Mat &src, cv::Mat &dst)
+{
+    src.copyTo(dst); // makes a copy of the image
+
+    int blur[5][5] = {
+        {1, 2, 4, 2, 1},
+        {2, 4, 8, 4, 2},
+        {4, 8, 16, 8, 4},
+        {2, 4, 8, 4, 2},
+        {1, 2, 4, 2, 1}};
+
+    // loop over all pixels except the outer two rows and columns
+    for (int i = 2; i < dst.rows-2; i++) {
+        for (int j = 2; j < dst.cols-2; j++) {
+            for (int k = 0; k < 3; k++) { // loop over RGB color channels
+                int sum = 0; // sum of all neighboring pixel values multiplied by the blur matrix
+                for (int y = -2; y < 3; y++) {
+                    for (int x = -2; x < 3; x++) {
+                        // sum the values from the original src image
+                        sum += src.at<cv::Vec3b>(i + y, j + x)[k] * blur[y+2][x+2];
+                    }
+                }
+                sum = sum / 100; // divide by the sum of values in the blur matrix to normalize
+                dst.at<cv::Vec3b>(i, j)[k] = (uchar)sum; // update the dst image
+            }
+        }
+    }
+    return (0);
+}
+
