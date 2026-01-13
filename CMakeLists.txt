@@ -6,7 +6,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(OpenCV REQUIRED)
 
-add_executable(project1 vidDisplay.cpp)
+add_executable(project1 vidDisplay.cpp filter.cpp)
 
 target_include_directories(project1 PRIVATE ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(project1 PRIVATE ${OpenCV_LIBS})
