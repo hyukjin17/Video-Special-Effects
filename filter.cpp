@@ -117,7 +117,6 @@ int blur5x5_2(cv::Mat &src, cv::Mat &dst)
     {
         cv::Vec3b *srcPtr = src.ptr<cv::Vec3b>(i);   // gets the row pointer from the src image
         cv::Vec3b *tempPtr = temp.ptr<cv::Vec3b>(i); // gets the row pointer from the temp image
-        cv::Vec3b *tempPtr = dst.ptr<cv::Vec3b>(i); // gets the row pointer from the dst image
         // loop over the columns (except the first and last two)
         for (int j = 2; j < dst.cols - 2; j++)
         {
@@ -132,12 +131,41 @@ int blur5x5_2(cv::Mat &src, cv::Mat &dst)
                 }
                 sum = sum / 10;             // divide by the sum of values in the blur vector to normalize
                 tempPtr[j][k] = (uchar)sum; // update the temp image
-                dstPtr[j][k] = (uchar)sum;  // for testing only
             }
         }
     }
 
+    // second pass (vertical blur) using the generated temp image
+    // loop over the rows (except the first and last two)
+    for (int i = 2; i < dst.rows - 2; i++)
+    {
+        // gets the 5 row pointers from the temp image
+        cv::Vec3b *p1 = temp.ptr<cv::Vec3b>(i - 2);
+        cv::Vec3b *p2 = temp.ptr<cv::Vec3b>(i - 1);
+        cv::Vec3b *p3 = temp.ptr<cv::Vec3b>(i);
+        cv::Vec3b *p4 = temp.ptr<cv::Vec3b>(i + 1);
+        cv::Vec3b *p5 = temp.ptr<cv::Vec3b>(i + 2);
+        
+        cv::Vec3b *dstPtr = dst.ptr<cv::Vec3b>(i);   // gets the row pointer from the dst image
+        // loop over all columns
+        for (int j = 0; j < dst.cols; j++)
+        {
+            // loop over RGB color channels
+            for (int k = 0; k < 3; k++)
+            {
+                int sum = 0; // sum of the vertically neighboring pixel values
+                // sum the values from each of the 5 rows in the temp image
+                sum += p1[j][k] * blur[0];
+                sum += p2[j][k] * blur[1];
+                sum += p3[j][k] * blur[2];
+                sum += p4[j][k] * blur[3];
+                sum += p5[j][k] * blur[4];
 
+                sum = sum / 10;            // divide by the sum of values in the blur vector to normalize
+                dstPtr[j][k] = (uchar)sum; // update the dst image
+            }
+        }
+    }
 
     return (0);
 }
