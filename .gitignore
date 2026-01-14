@@ -2,6 +2,8 @@
 build/
 build-*/
 cmake-build-*/
+timeblur/
+faceDetect/
 
 # ---- CMake generated files ----
 CMakeCache.txt
