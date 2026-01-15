@@ -6,7 +6,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(OpenCV REQUIRED)
 
-add_executable(project1 vidDisplay.cpp filter.cpp)
+add_executable(project1 vidDisplay.cpp filter.cpp faceDetect/faceDetect.cpp)
 
-target_include_directories(project1 PRIVATE ${OpenCV_INCLUDE_DIRS})
+target_include_directories(project1 PUBLIC "${CMAKE_SOURCE_DIR}/faceDetect" PRIVATE ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(project1 PRIVATE ${OpenCV_LIBS})
