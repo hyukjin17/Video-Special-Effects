@@ -7,7 +7,8 @@
 #include <cmath>
 #include "opencv2/opencv.hpp"
 
-// convert image to greyscale by manipulating each pixel RGB value
+// Convert image to greyscale by manipulating each pixel RGB value
+// Args: color src image     Return: greyscale dst image
 int greyscale(cv::Mat &src, cv::Mat &dst)
 {
     src.copyTo(dst); // makes a copy of the image
@@ -30,20 +31,22 @@ int greyscale(cv::Mat &src, cv::Mat &dst)
     return (0);
 }
 
-// convert image to sepia tone
+// Convert image to sepia tone
+// Args: color src image     Return: sepia dst image
 int sepia(cv::Mat &src, cv::Mat &dst)
 {
-    src.copyTo(dst); // makes a copy of the image
+    dst.create(src.size(), src.type());
     for (int i = 0; i < dst.rows; i++)
     {
-        cv::Vec3b *ptr = dst.ptr<cv::Vec3b>(i); // gets the row pointer for row i
+        cv::Vec3b *srcPtr = src.ptr<cv::Vec3b>(i); // row pointer for src
+        cv::Vec3b *dstPtr = dst.ptr<cv::Vec3b>(i); // row pointer for dst
         for (int j = 0; j < dst.cols; j++)
         {
             // conversion to sepia tone using a given formula
             // save original RGB values to avoid modifying them in the future calculations
-            uchar red = ptr[j][2];
-            uchar green = ptr[j][1];
-            uchar blue = ptr[j][0];
+            uchar red = srcPtr[j][2];
+            uchar green = srcPtr[j][1];
+            uchar blue = srcPtr[j][0];
             int newBlue = 0.272 * red + 0.534 * green + 0.131 * blue;
             int newGreen = 0.349 * red + 0.686 * green + 0.168 * blue;
             int newRed = 0.393 * red + 0.769 * green + 0.189 * blue;
@@ -57,15 +60,16 @@ int sepia(cv::Mat &src, cv::Mat &dst)
                 newRed = 255;
 
             // assign new values to the pixels
-            ptr[j][0] = (uchar)newBlue;
-            ptr[j][1] = (uchar)newGreen;
-            ptr[j][2] = (uchar)newRed;
+            dstPtr[j][0] = (uchar)newBlue;
+            dstPtr[j][1] = (uchar)newGreen;
+            dstPtr[j][2] = (uchar)newRed;
         }
     }
     return (0);
 }
 
 // 5x5 blur filter using integer approximation of Gaussian (smoothing)
+// Args: color src image     Return: blurred dst image
 int blur5x5_1(cv::Mat &src, cv::Mat &dst)
 {
     src.copyTo(dst); // makes a copy of the image
@@ -100,10 +104,11 @@ int blur5x5_1(cv::Mat &src, cv::Mat &dst)
     return (0);
 }
 
-// faster implementation of a 5x5 blur filter using separable horizontal and vertical filters
+// Faster implementation of a 5x5 blur filter using separable horizontal and vertical filters
+// Args: color src image     Return: blurred dst image
 int blur5x5_2(cv::Mat &src, cv::Mat &dst)
 {
-    cv::Mat temp;
+    static cv::Mat temp;
     src.copyTo(temp); // makes an intermediate temp copy of the image
     src.copyTo(dst);  // makes a copy of the image for the final blur
 
@@ -119,10 +124,9 @@ int blur5x5_2(cv::Mat &src, cv::Mat &dst)
             // loop over RGB color channels
             for (int k = 0; k < 3; k++)
             {
-                int sum = 0; // sum of the horizontally neighboring pixel values
+                int sum = 0; // sum of the horizontally neighboring pixel values from the src image
                 for (int x = -2; x < 3; x++)
                 {
-                    // sum the values from the original src image
                     sum += srcPtr[j + x][k] * blur[x + 2];
                 }
                 sum = sum / 10;             // divide by the sum of values in the blur vector to normalize
@@ -160,6 +164,7 @@ int blur5x5_2(cv::Mat &src, cv::Mat &dst)
 }
 
 // 3x3 Sobel X filter as separable 1x3 filters (detects vertical edges)
+// Args: color src image     Return: 16-bit signed short dst image
 int sobelX3x3(cv::Mat &src, cv::Mat &dst)
 {
     static cv::Mat temp;
@@ -216,6 +221,7 @@ int sobelX3x3(cv::Mat &src, cv::Mat &dst)
 }
 
 // 3x3 Sobel Y filter as separable 1x3 filters (detects horizontal edges)
+// Args: color src image     Return: 16-bit signed short dst image
 int sobelY3x3(cv::Mat &src, cv::Mat &dst)
 {
     static cv::Mat temp;
@@ -272,7 +278,8 @@ int sobelY3x3(cv::Mat &src, cv::Mat &dst)
     return (0);
 }
 
-// generates a gradient magnitude image from the X and Y Sobel images
+// Generates a gradient magnitude image from the X and Y Sobel images
+// Args: 16-bit signed short Sobel X and Sobel Y images     Return: 8-bit uchar dst image
 int magnitude(cv::Mat &sx, cv::Mat &sy, cv::Mat &dst)
 {
     dst.create(sx.size(), CV_8UC3);
@@ -280,14 +287,45 @@ int magnitude(cv::Mat &sx, cv::Mat &sy, cv::Mat &dst)
     {
         cv::Vec3s *sxPtr = sx.ptr<cv::Vec3s>(i); // row pointer for sx image
         cv::Vec3s *syPtr = sy.ptr<cv::Vec3s>(i); // row pointer for sy image
-        cv::Vec3b *ptr = dst.ptr<cv::Vec3b>(i);   // row pointer for dst image
+        cv::Vec3b *ptr = dst.ptr<cv::Vec3b>(i);  // row pointer for dst image
         for (int j = 0; j < dst.cols; j++)
         {
             for (int k = 0; k < 3; k++)
             {
                 int val = std::sqrt(sxPtr[j][k] * sxPtr[j][k] + syPtr[j][k] * syPtr[j][k]);
-                if (val > 255) val = 255; // clamp the values to 255
+                if (val > 255)
+                    val = 255; // clamp the values to 255
                 ptr[j][k] = (uchar)val;
+            }
+        }
+    }
+
+    return (0);
+}
+
+// Blurs and quantizes a color image (5x5 Gaussian blur + quantization)
+// Args: color src image     Return: quantized dst image
+int blurQuantize(cv::Mat &src, cv::Mat &dst, int levels)
+{
+    static cv::Mat blur;
+    blur5x5_2(src, blur);
+
+    int buckets = 255 / levels;
+    dst.create(src.size(), src.type());
+
+    int xt, xf;
+
+    for (int i = 0; i < dst.rows; i++)
+    {
+        cv::Vec3b *blurPtr = blur.ptr<cv::Vec3b>(i); // row pointer for blurred image
+        cv::Vec3b *dstPtr = dst.ptr<cv::Vec3b>(i);   // row pointer for dst image
+        for (int j = 0; j < dst.cols; j++)
+        {
+            for (int k = 0; k < 3; k++)
+            {
+                xt = blurPtr[j][k] / buckets;
+                xf = xt * buckets;
+                dstPtr[j][k] = (uchar)xf;
             }
         }
     }

@@ -8,7 +8,7 @@
 #include <cstdlib>
 #include "opencv2/opencv.hpp"
 
-// function signatures for filter.cpp
+// function signatures for filter functions
 int greyscale(cv::Mat &src, cv::Mat &dst);
 int sepia(cv::Mat &src, cv::Mat &dst);
 int blur5x5_1(cv::Mat &src, cv::Mat &dst);
@@ -87,11 +87,14 @@ int main(int argc, char *argv[])
             sobelY3x3(frame, temp2);
             magnitude(temp, temp2, mod); // takes in sobel X and Y images and outputs gradient magnitude
             break;
+        case 'l':
+            blurQuantize(frame, mod, 3);
+            break;
         case 'f':
             // convert the image to greyscale
             cv::cvtColor(frame, grey, cv::COLOR_BGR2GRAY, 0);
-            detectFaces(grey, faces); // detect faces
-            drawBoxes(frame, faces);  // draw boxes around the faces
+            detectFaces(grey, faces);
+            drawBoxes(frame, faces); // draw boxes around the faces
 
             // add a little smoothing by averaging the last two detections
             if (faces.size() > 0)
@@ -129,6 +132,8 @@ int main(int argc, char *argv[])
             imgType = 'f'; // face detect
         else if (key == 'm')
             imgType = 'm'; // gradient magnitude
+        else if (key == 'l')
+            imgType = 'l'; // blur & quantize
     }
 
     delete capdev;
