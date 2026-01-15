@@ -4,6 +4,7 @@
     Applies different filters to the video stream
 */
 
+#include <cmath>
 #include "opencv2/opencv.hpp"
 
 // convert image to greyscale by manipulating each pixel RGB value
@@ -264,6 +265,26 @@ int sobelY3x3(cv::Mat &src, cv::Mat &dst)
             {
                 // sum of the vertically neighboring pixel values from each of the 3 rows in the temp image (multiplied by filterY)
                 dstPtr[j][k] = p1[j][k] * filterY[0] + p2[j][k] * filterY[1] + p3[j][k] * filterY[2]; // update the dst image
+            }
+        }
+    }
+
+    return (0);
+}
+
+// generates a gradient magnitude image from the X and Y Sobel images
+int magnitude(cv::Mat &sx, cv::Mat &sy, cv::Mat &dst)
+{
+    for (int i = 0; i < dst.rows; i++)
+    {
+        cv::Vec3s *sxPtr = sx.ptr<cv::Vec3s>(i); // row pointer for sx image
+        cv::Vec3s *syPtr = sy.ptr<cv::Vec3s>(i); // row pointer for sy image
+        cv::Vec3b *ptr = dst.ptr<cv::Vec3b>(i);   // row pointer for dst image
+        for (int j = 0; j < dst.cols; j++)
+        {
+            for (int k = 0; k < 3; k++)
+            {
+                ptr[j][k] = (uchar)std::sqrt(sxPtr[j][k] * sxPtr[j][k] + syPtr[j][k] * syPtr[j][k]);
             }
         }
     }

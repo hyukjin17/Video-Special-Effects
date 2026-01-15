@@ -4,11 +4,11 @@
     Displays live video by looping over frames
 */
 
-#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include "opencv2/opencv.hpp"
 
+// function signatures for filter.cpp
 int greyscale(cv::Mat &src, cv::Mat &dst);
 int sepia(cv::Mat &src, cv::Mat &dst);
 int blur5x5_1(cv::Mat &src, cv::Mat &dst);
@@ -17,6 +17,8 @@ int sobelX3x3(cv::Mat &src, cv::Mat &dst);
 int sobelY3x3(cv::Mat &src, cv::Mat &dst);
 int detectFaces(cv::Mat &grey, std::vector<cv::Rect> &faces);
 int drawBoxes(cv::Mat &frame, std::vector<cv::Rect> &faces, int minWidth = 50, float scale = 1.0);
+int magnitude(cv::Mat &sx, cv::Mat &sy, cv::Mat &dst);
+int blurQuantize(cv::Mat &src, cv::Mat &dst, int levels);
 
 int main(int argc, char *argv[])
 {
@@ -39,10 +41,11 @@ int main(int argc, char *argv[])
     cv::Mat frame;                    // initial frame
     cv::Mat mod;                      // modified frame
     cv::Mat temp;
-    cv::Mat grey;                     // greyscale frame used for face detection
-    std::vector<cv::Rect> faces;      // used for face detection
-    cv::Rect last(0, 0, 0, 0);        // rectangle around the face
-    char imgType = 'c';               // sets img type for the video stream (default is color)
+    cv::Mat temp2;
+    cv::Mat grey;                // greyscale frame used for face detection
+    std::vector<cv::Rect> faces; // used for face detection
+    cv::Rect last(0, 0, 0, 0);   // rectangle around the face
+    char imgType = 'c';          // sets img type for the video stream (default is color)
 
     for (;;) // infinite loop until break
     {
@@ -78,6 +81,11 @@ int main(int argc, char *argv[])
         case 'y':
             sobelY3x3(frame, temp);         // outputs signed shorts due to the Sobel filter
             cv::convertScaleAbs(temp, mod); // converts to positive values for visualization
+            break;
+        case 'm':
+            sobelX3x3(frame, temp);
+            sobelY3x3(frame, temp2);
+            magnitude(temp, temp2, mod); // takes in sobel X and Y images and outputs gradient magnitude
             break;
         case 'f':
             // convert the image to greyscale
@@ -119,6 +127,8 @@ int main(int argc, char *argv[])
             imgType = 'y'; // Sobel Y 3x3
         else if (key == 'f')
             imgType = 'f'; // face detect
+        else if (key == 'm')
+            imgType = 'm'; // gradient magnitude
     }
 
     delete capdev;
