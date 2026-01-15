@@ -38,10 +38,11 @@ int main(int argc, char *argv[])
     cv::namedWindow("Live Video", 1); // identifies a window and automatically sizes it to the image
     cv::Mat frame;                    // initial frame
     cv::Mat mod;                      // modified frame
-    cv::Mat grey;                     // greyscale frame
+    cv::Mat temp;
+    cv::Mat grey;                     // greyscale frame used for face detection
     std::vector<cv::Rect> faces;      // used for face detection
-    cv::Rect last(0, 0, 0, 0);
-    char imgType = 'c'; // sets img type for the video stream (default is color)
+    cv::Rect last(0, 0, 0, 0);        // rectangle around the face
+    char imgType = 'c';               // sets img type for the video stream (default is color)
 
     for (;;) // infinite loop until break
     {
@@ -71,10 +72,12 @@ int main(int argc, char *argv[])
             blur5x5_2(frame, mod);
             break;
         case 'x':
-            sobelX3x3(frame, mod);
+            sobelX3x3(frame, temp);         // outputs signed shorts due to the Sobel filter
+            cv::convertScaleAbs(temp, mod); // converts to positive values for visualization
             break;
         case 'y':
-            sobelY3x3(frame, mod);
+            sobelY3x3(frame, temp);         // outputs signed shorts due to the Sobel filter
+            cv::convertScaleAbs(temp, mod); // converts to positive values for visualization
             break;
         case 'f':
             // convert the image to greyscale
