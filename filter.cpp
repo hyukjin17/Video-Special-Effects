@@ -13,7 +13,6 @@ int greyscale(cv::Mat &src, cv::Mat &dst)
     for (int i = 0; i < dst.rows; i++)
     {
         cv::Vec3b *ptr = dst.ptr<cv::Vec3b>(i); // gets the row pointer for row i
-        // loop over the columns
         for (int j = 0; j < dst.cols; j++)
         {
             // conversion from RGB to greyscale (with some or all inverted colors)
@@ -37,7 +36,6 @@ int sepia(cv::Mat &src, cv::Mat &dst)
     for (int i = 0; i < dst.rows; i++)
     {
         cv::Vec3b *ptr = dst.ptr<cv::Vec3b>(i); // gets the row pointer for row i
-        // loop over the columns
         for (int j = 0; j < dst.cols; j++)
         {
             // conversion to sepia tone using a given formula
@@ -78,7 +76,6 @@ int blur5x5_1(cv::Mat &src, cv::Mat &dst)
         {2, 4, 8, 4, 2},
         {1, 2, 4, 2, 1}};
 
-    // loop over all pixels except the outer two rows and columns
     for (int i = 2; i < dst.rows - 2; i++)
     {
         for (int j = 2; j < dst.cols - 2; j++)
@@ -112,12 +109,10 @@ int blur5x5_2(cv::Mat &src, cv::Mat &dst)
     int blur[5] = {1, 2, 4, 2, 1};
 
     // first pass (horizontal blur)
-    // loop over every row
     for (int i = 0; i < dst.rows; i++)
     {
         cv::Vec3b *srcPtr = src.ptr<cv::Vec3b>(i);   // gets the row pointer from the src image
         cv::Vec3b *tempPtr = temp.ptr<cv::Vec3b>(i); // gets the row pointer from the temp image
-        // loop over the columns (except the first and last two)
         for (int j = 2; j < dst.cols - 2; j++)
         {
             // loop over RGB color channels
@@ -136,7 +131,6 @@ int blur5x5_2(cv::Mat &src, cv::Mat &dst)
     }
 
     // second pass (vertical blur) using the generated temp image
-    // loop over the rows (except the first and last two)
     for (int i = 2; i < dst.rows - 2; i++)
     {
         // gets the 5 row pointers from the temp image
@@ -171,33 +165,31 @@ int sobelX3x3(cv::Mat &src, cv::Mat &dst)
     // makes an intermediate temp matrix
     temp.create(src.size(), CV_16SC3);
     temp = cv::Scalar(0, 0, 0);
-    
-    src.copyTo(dst);  // makes a copy of the image for the final blur
 
-    int filterX[3] = {-1, 0, 1};
-    int filterY[3] = {1, 2, 1};
+    // makes a dst matrix for the final image
+    dst.create(src.size(), CV_16SC3);
+    dst = cv::Scalar(0, 0, 0);
 
     // first pass (horizontal filter)
-    // loop over every row
     for (int i = 0; i < dst.rows; i++)
     {
         cv::Vec3b *srcPtr = src.ptr<cv::Vec3b>(i);   // gets the row pointer from the src image
         cv::Vec3b *tempPtr = temp.ptr<cv::Vec3b>(i); // gets the row pointer from the temp image
-        // loop over the columns (except the first and last)
         for (int j = 1; j < dst.cols - 1; j++)
         {
             // loop over RGB color channels
             for (int k = 0; k < 3; k++)
             {
                 // sum of the horizontally neighboring pixel values from the original src image
-                int sum = srcPtr[j - 1][k] * filterX[0] + srcPtr[j][k] * filterX[1] + srcPtr[j + 1][k] * filterX[2];
-                tempPtr[j][k] = (uchar)sum; // update the temp image
+                // multiply the left pixel by -1 and the right pixel by 1 (filterX = {-1, 0, 1})
+                tempPtr[j][k] = -1 * srcPtr[j - 1][k] + srcPtr[j + 1][k]; // update the temp image
             }
         }
     }
 
+    // vertical part of Sobel X filter
+    int filterY[3] = {1, 2, 1};
     // second pass (vertical filter) using the generated temp image
-    // loop over the rows (except the first and last)
     for (int i = 1; i < dst.rows - 1; i++)
     {
         // gets the 3 row pointers from the temp image
@@ -205,17 +197,15 @@ int sobelX3x3(cv::Mat &src, cv::Mat &dst)
         cv::Vec3b *p2 = temp.ptr<cv::Vec3b>(i);
         cv::Vec3b *p3 = temp.ptr<cv::Vec3b>(i + 1);
 
-        cv::Vec3b *dstPtr = dst.ptr<cv::Vec3b>(i); // gets the row pointer from the dst image
-        // loop over all columns
+        cv::Vec3b *dstPtr = dst.ptr<cv::Vec3b>(i);
         for (int j = 0; j < dst.cols; j++)
         {
             // loop over RGB color channels
             for (int k = 0; k < 3; k++)
             {
                 // sum of the vertically neighboring pixel values from each of the 3 rows in the temp image
-                int sum = p1[j][k] * filterY[0] + p2[j][k] * filterY[1] + p3[j][k] * filterY[2];
-                sum = sum / 4;             // divide by the sum of values in the blur vector to normalize
-                dstPtr[j][k] = (uchar)sum; // update the dst image
+                // divide by the sum of values in the blur vector to normalize
+                dstPtr[j][k] = (p1[j][k] * filterY[0] + p2[j][k] * filterY[1] + p3[j][k] * filterY[2]) / 4; // update the dst image
             }
         }
     }
