@@ -145,27 +145,85 @@ int blur5x5_2(cv::Mat &src, cv::Mat &dst)
         cv::Vec3b *p3 = temp.ptr<cv::Vec3b>(i);
         cv::Vec3b *p4 = temp.ptr<cv::Vec3b>(i + 1);
         cv::Vec3b *p5 = temp.ptr<cv::Vec3b>(i + 2);
-        
-        cv::Vec3b *dstPtr = dst.ptr<cv::Vec3b>(i);   // gets the row pointer from the dst image
+
+        cv::Vec3b *dstPtr = dst.ptr<cv::Vec3b>(i); // gets the row pointer from the dst image
         // loop over all columns
         for (int j = 0; j < dst.cols; j++)
         {
             // loop over RGB color channels
             for (int k = 0; k < 3; k++)
             {
-                int sum = 0; // sum of the vertically neighboring pixel values
-                // sum the values from each of the 5 rows in the temp image
-                sum += p1[j][k] * blur[0];
-                sum += p2[j][k] * blur[1];
-                sum += p3[j][k] * blur[2];
-                sum += p4[j][k] * blur[3];
-                sum += p5[j][k] * blur[4];
-
+                // sum of the vertically neighboring pixel values from each of the 5 rows in the temp image
+                int sum = p1[j][k] * blur[0] + p2[j][k] * blur[1] + p3[j][k] * blur[2] + p4[j][k] * blur[3] + p5[j][k] * blur[4];
                 sum = sum / 10;            // divide by the sum of values in the blur vector to normalize
                 dstPtr[j][k] = (uchar)sum; // update the dst image
             }
         }
     }
 
+    return (0);
+}
+
+// 3x3 Sobel X filter as separable 1x3 filters (detects vertical edges)
+int sobelX3x3(cv::Mat &src, cv::Mat &dst)
+{
+    static cv::Mat temp;
+    // makes an intermediate temp matrix
+    temp.create(src.size(), CV_16SC3);
+    temp = cv::Scalar(0, 0, 0);
+    
+    src.copyTo(dst);  // makes a copy of the image for the final blur
+
+    int filterX[3] = {-1, 0, 1};
+    int filterY[3] = {1, 2, 1};
+
+    // first pass (horizontal filter)
+    // loop over every row
+    for (int i = 0; i < dst.rows; i++)
+    {
+        cv::Vec3b *srcPtr = src.ptr<cv::Vec3b>(i);   // gets the row pointer from the src image
+        cv::Vec3b *tempPtr = temp.ptr<cv::Vec3b>(i); // gets the row pointer from the temp image
+        // loop over the columns (except the first and last)
+        for (int j = 1; j < dst.cols - 1; j++)
+        {
+            // loop over RGB color channels
+            for (int k = 0; k < 3; k++)
+            {
+                // sum of the horizontally neighboring pixel values from the original src image
+                int sum = srcPtr[j - 1][k] * filterX[0] + srcPtr[j][k] * filterX[1] + srcPtr[j + 1][k] * filterX[2];
+                tempPtr[j][k] = (uchar)sum; // update the temp image
+            }
+        }
+    }
+
+    // second pass (vertical filter) using the generated temp image
+    // loop over the rows (except the first and last)
+    for (int i = 1; i < dst.rows - 1; i++)
+    {
+        // gets the 3 row pointers from the temp image
+        cv::Vec3b *p1 = temp.ptr<cv::Vec3b>(i - 1);
+        cv::Vec3b *p2 = temp.ptr<cv::Vec3b>(i);
+        cv::Vec3b *p3 = temp.ptr<cv::Vec3b>(i + 1);
+
+        cv::Vec3b *dstPtr = dst.ptr<cv::Vec3b>(i); // gets the row pointer from the dst image
+        // loop over all columns
+        for (int j = 0; j < dst.cols; j++)
+        {
+            // loop over RGB color channels
+            for (int k = 0; k < 3; k++)
+            {
+                // sum of the vertically neighboring pixel values from each of the 3 rows in the temp image
+                int sum = p1[j][k] * filterY[0] + p2[j][k] * filterY[1] + p3[j][k] * filterY[2];
+                sum = sum / 4;             // divide by the sum of values in the blur vector to normalize
+                dstPtr[j][k] = (uchar)sum; // update the dst image
+            }
+        }
+    }
+
+    return (0);
+}
+
+int sobelY3x3(cv::Mat &src, cv::Mat &dst)
+{
     return (0);
 }
