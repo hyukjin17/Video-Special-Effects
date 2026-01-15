@@ -275,6 +275,7 @@ int sobelY3x3(cv::Mat &src, cv::Mat &dst)
 // generates a gradient magnitude image from the X and Y Sobel images
 int magnitude(cv::Mat &sx, cv::Mat &sy, cv::Mat &dst)
 {
+    dst.create(sx.size(), CV_8UC3);
     for (int i = 0; i < dst.rows; i++)
     {
         cv::Vec3s *sxPtr = sx.ptr<cv::Vec3s>(i); // row pointer for sx image
@@ -284,7 +285,9 @@ int magnitude(cv::Mat &sx, cv::Mat &sy, cv::Mat &dst)
         {
             for (int k = 0; k < 3; k++)
             {
-                ptr[j][k] = (uchar)std::sqrt(sxPtr[j][k] * sxPtr[j][k] + syPtr[j][k] * syPtr[j][k]);
+                int val = std::sqrt(sxPtr[j][k] * sxPtr[j][k] + syPtr[j][k] * syPtr[j][k]);
+                if (val > 255) val = 255; // clamp the values to 255
+                ptr[j][k] = (uchar)val;
             }
         }
     }
