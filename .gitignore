@@ -3,6 +3,7 @@ build/
 build-*/
 cmake-build-*/
 timeblur/
+da2-code/
 
 # ---- CMake generated files ----
 CMakeCache.txt
