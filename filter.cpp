@@ -332,3 +332,28 @@ int blurQuantize(cv::Mat &src, cv::Mat &dst, int levels)
 
     return (0);
 }
+
+// Generates an inverse gradient magnitude image from the X and Y Sobel images
+// Args: 16-bit signed short Sobel X and Sobel Y images     Return: 8-bit uchar dst image
+int inv_magnitude(cv::Mat &sx, cv::Mat &sy, cv::Mat &dst)
+{
+    dst.create(sx.size(), CV_8UC3);
+    for (int i = 0; i < dst.rows; i++)
+    {
+        cv::Vec3s *sxPtr = sx.ptr<cv::Vec3s>(i); // row pointer for sx image
+        cv::Vec3s *syPtr = sy.ptr<cv::Vec3s>(i); // row pointer for sy image
+        cv::Vec3b *ptr = dst.ptr<cv::Vec3b>(i);  // row pointer for dst image
+        for (int j = 0; j < dst.cols; j++)
+        {
+            for (int k = 0; k < 3; k++)
+            {
+                int val = std::sqrt(sxPtr[j][k] * sxPtr[j][k] + syPtr[j][k] * syPtr[j][k]);
+                if (val > 255)
+                    val = 255; // clamp the values to 255
+                ptr[j][k] = (uchar)(255 - val);
+            }
+        }
+    }
+
+    return (0);
+}

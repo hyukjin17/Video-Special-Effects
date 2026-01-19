@@ -7,18 +7,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include "opencv2/opencv.hpp"
-
-// function signatures for filter functions
-int greyscale(cv::Mat &src, cv::Mat &dst);
-int sepia(cv::Mat &src, cv::Mat &dst);
-int blur5x5_1(cv::Mat &src, cv::Mat &dst);
-int blur5x5_2(cv::Mat &src, cv::Mat &dst);
-int sobelX3x3(cv::Mat &src, cv::Mat &dst);
-int sobelY3x3(cv::Mat &src, cv::Mat &dst);
-int detectFaces(cv::Mat &grey, std::vector<cv::Rect> &faces);
-int drawBoxes(cv::Mat &frame, std::vector<cv::Rect> &faces, int minWidth = 50, float scale = 1.0);
-int magnitude(cv::Mat &sx, cv::Mat &sy, cv::Mat &dst);
-int blurQuantize(cv::Mat &src, cv::Mat &dst, int levels);
+#include "filter.hpp"
 
 int main(int argc, char *argv[])
 {
@@ -87,8 +76,13 @@ int main(int argc, char *argv[])
             sobelY3x3(frame, temp2);
             magnitude(temp, temp2, mod); // takes in sobel X and Y images and outputs gradient magnitude
             break;
+        case 'i':
+            sobelX3x3(frame, temp);
+            sobelY3x3(frame, temp2);
+            inv_magnitude(temp, temp2, mod);
+            break;
         case 'l':
-            blurQuantize(frame, mod, 3);
+            blurQuantize(frame, mod, 10);
             break;
         case 'f':
             // convert the image to greyscale
@@ -134,6 +128,8 @@ int main(int argc, char *argv[])
             imgType = 'm'; // gradient magnitude
         else if (key == 'l')
             imgType = 'l'; // blur & quantize
+        else if (key == 'i')
+            imgType = 'i'; // inverse of gradient magnitude
     }
 
     delete capdev;
