@@ -6,10 +6,12 @@
 
 #include <cmath>
 #include "opencv2/opencv.hpp"
+#include "faceDetect/faceDetect.h"
+
 
 // Convert image to grayscale by manipulating each pixel RGB value
 // Args: color src image     Return: grayscale dst image
-int greyscale(cv::Mat &src, cv::Mat &dst)
+int grayscale(cv::Mat &src, cv::Mat &dst)
 {
     src.copyTo(dst); // makes a copy of the image
     for (int i = 0; i < dst.rows; i++)
@@ -28,7 +30,7 @@ int greyscale(cv::Mat &src, cv::Mat &dst)
             }
         }
     }
-    return(0);
+    return (0);
 }
 
 // Convert image to sepia tone
@@ -65,7 +67,7 @@ int sepia(cv::Mat &src, cv::Mat &dst)
             dstPtr[j][2] = (uchar)newRed;
         }
     }
-    return(0);
+    return (0);
 }
 
 // 5x5 blur filter using integer approximation of Gaussian (smoothing)
@@ -101,7 +103,7 @@ int blur5x5_1(cv::Mat &src, cv::Mat &dst)
             }
         }
     }
-    return(0);
+    return (0);
 }
 
 // Faster implementation of a 5x5 blur filter using separable horizontal and vertical filters
@@ -160,7 +162,7 @@ int blur5x5_2(cv::Mat &src, cv::Mat &dst)
         }
     }
 
-    return(0);
+    return (0);
 }
 
 // 3x3 Sobel X filter as separable 1x3 filters (detects vertical edges)
@@ -211,13 +213,13 @@ int sobelX3x3(cv::Mat &src, cv::Mat &dst)
             for (int k = 0; k < 3; k++)
             {
                 // sum of the vertically neighboring pixel values from each of the 3 rows in the temp image (multiplied by filterY)
-                // divide by the sum of values in the blur vector to normalize
-                dstPtr[j][k] = (p1[j][k] * filterY[0] + p2[j][k] * filterY[1] + p3[j][k] * filterY[2]) / 4; // update the dst image
+                // divide by the sum of values in the blur vector to normalize and multiply by 2 to make the edges brighter
+                dstPtr[j][k] = (p1[j][k] * filterY[0] + p2[j][k] * filterY[1] + p3[j][k] * filterY[2]) / 2;
             }
         }
     }
 
-    return(0);
+    return (0);
 }
 
 // 3x3 Sobel Y filter as separable 1x3 filters (detects horizontal edges)
@@ -270,12 +272,13 @@ int sobelY3x3(cv::Mat &src, cv::Mat &dst)
             for (int k = 0; k < 3; k++)
             {
                 // sum of the vertically neighboring pixel values from each of the 3 rows in the temp image (multiplied by filterY)
-                dstPtr[j][k] = p1[j][k] * filterY[0] + p2[j][k] * filterY[1] + p3[j][k] * filterY[2]; // update the dst image
+                // multiply by 2 to make the edges brighter
+                dstPtr[j][k] = (p1[j][k] * filterY[0] + p2[j][k] * filterY[1] + p3[j][k] * filterY[2]) * 2;
             }
         }
     }
 
-    return(0);
+    return (0);
 }
 
 // Generates a gradient magnitude image from the X and Y Sobel images
@@ -300,7 +303,7 @@ int magnitude(cv::Mat &sx, cv::Mat &sy, cv::Mat &dst)
         }
     }
 
-    return(0);
+    return (0);
 }
 
 // Blurs and quantizes a color image (5x5 Gaussian blur + quantization)
@@ -330,7 +333,7 @@ int blurQuantize(cv::Mat &src, cv::Mat &dst, int levels)
         }
     }
 
-    return(0);
+    return (0);
 }
 
 // Generates an inverse gradient magnitude image from the X and Y Sobel images
@@ -355,7 +358,7 @@ int inv_magnitude(cv::Mat &sx, cv::Mat &sy, cv::Mat &dst)
         }
     }
 
-    return(0);
+    return (0);
 }
 
 // Only leaves red colors in the image and turns the rest to grayscale
@@ -388,7 +391,7 @@ int only_red(cv::Mat &src, cv::Mat &dst)
         }
     }
 
-    return(0);
+    return (0);
 }
 
 // Mirrors the image with respect to the vertical axis at the center of the image
@@ -407,6 +410,46 @@ int mirror(cv::Mat &src, cv::Mat &dst)
             dstPtr[j] = srcPtr[cols - 1 - j];
         }
     }
-    return(0);
+    return (0);
+}
+
+// Laplacian filter that displays the second derivative (acceleration) of the image
+// Shows the rate of change of the rate of change of intensity
+// Each edge is displayed as double lines and the center of those parallel lines is the true position of the edge
+// Args: 8-bit color src image     Return: 8-bit dst image with sharp edges
+int laplacian(cv::Mat &src, cv::Mat &dst)
+{
+    static cv::Mat blur;
+    // cv::medianBlur(src, blur, 5);
+    blur5x5_2(src, blur); // removes noise from the image (standard practice before a laplacian)
+
+    static cv::Mat temp;
+    temp.create(src.size(), CV_16SC3);
+    temp = cv::Scalar(0, 0, 0);
+
+    for (int i = 1; i < dst.rows - 1; i++)
+    {
+        // gets the 3 row pointers from the blurred image
+        cv::Vec3b *p1 = blur.ptr<cv::Vec3b>(i - 1);
+        cv::Vec3b *p2 = blur.ptr<cv::Vec3b>(i);
+        cv::Vec3b *p3 = blur.ptr<cv::Vec3b>(i + 1);
+
+        cv::Vec3s *tmpPtr = temp.ptr<cv::Vec3s>(i); // row pointer from the temp image
+
+        for (int j = 1; j < dst.cols - 1; j++)
+        {
+            // loop over RGB color channels
+            for (int k = 0; k < 3; k++)
+            {
+                tmpPtr[j][k] = 4 * p2[j][k] - p1[j][k] - p2[j - 1][k] - p2[j + 1][k] - p3[j][k];
+            }
+        }
+    }
+
+    // converts the image back to 8-bit by scaling the values into the range [0, 255]
+    // adds a 10x scaling factor to make the edges more visible (blurring makes the second derivative darker)
+    cv::convertScaleAbs(temp, dst, 10.0);
+
+    return (0);
 }
 
