@@ -16,3 +16,4 @@ int magnitude(cv::Mat &sx, cv::Mat &sy, cv::Mat &dst);
 int inv_magnitude(cv::Mat &sx, cv::Mat &sy, cv::Mat &dst);
 int blurQuantize(cv::Mat &src, cv::Mat &dst, int levels);
 int only_red(cv::Mat &src, cv::Mat &dst);
+int mirror(cv::Mat &src, cv::Mat &dst);

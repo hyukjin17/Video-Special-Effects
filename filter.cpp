@@ -28,7 +28,7 @@ int greyscale(cv::Mat &src, cv::Mat &dst)
             }
         }
     }
-    return (0);
+    return(0);
 }
 
 // Convert image to sepia tone
@@ -65,7 +65,7 @@ int sepia(cv::Mat &src, cv::Mat &dst)
             dstPtr[j][2] = (uchar)newRed;
         }
     }
-    return (0);
+    return(0);
 }
 
 // 5x5 blur filter using integer approximation of Gaussian (smoothing)
@@ -101,7 +101,7 @@ int blur5x5_1(cv::Mat &src, cv::Mat &dst)
             }
         }
     }
-    return (0);
+    return(0);
 }
 
 // Faster implementation of a 5x5 blur filter using separable horizontal and vertical filters
@@ -160,7 +160,7 @@ int blur5x5_2(cv::Mat &src, cv::Mat &dst)
         }
     }
 
-    return (0);
+    return(0);
 }
 
 // 3x3 Sobel X filter as separable 1x3 filters (detects vertical edges)
@@ -217,7 +217,7 @@ int sobelX3x3(cv::Mat &src, cv::Mat &dst)
         }
     }
 
-    return (0);
+    return(0);
 }
 
 // 3x3 Sobel Y filter as separable 1x3 filters (detects horizontal edges)
@@ -275,7 +275,7 @@ int sobelY3x3(cv::Mat &src, cv::Mat &dst)
         }
     }
 
-    return (0);
+    return(0);
 }
 
 // Generates a gradient magnitude image from the X and Y Sobel images
@@ -300,7 +300,7 @@ int magnitude(cv::Mat &sx, cv::Mat &sy, cv::Mat &dst)
         }
     }
 
-    return (0);
+    return(0);
 }
 
 // Blurs and quantizes a color image (5x5 Gaussian blur + quantization)
@@ -330,7 +330,7 @@ int blurQuantize(cv::Mat &src, cv::Mat &dst, int levels)
         }
     }
 
-    return (0);
+    return(0);
 }
 
 // Generates an inverse gradient magnitude image from the X and Y Sobel images
@@ -355,13 +355,14 @@ int inv_magnitude(cv::Mat &sx, cv::Mat &sy, cv::Mat &dst)
         }
     }
 
-    return (0);
+    return(0);
 }
 
 // Only leaves red colors in the image and turns the rest to grayscale
 // Uses HSV values to correctly identify red colors (regardless of brightness and contrast)
 // Args: color src image     Return: grayscale dst image (with only red colors)
-int only_red(cv::Mat &src, cv::Mat &dst) {
+int only_red(cv::Mat &src, cv::Mat &dst)
+{
     static cv::Mat hsvImage;
     cv::cvtColor(src, hsvImage, cv::COLOR_BGR2HSV); // creates new HSV image
     static cv::Mat gray;
@@ -371,16 +372,17 @@ int only_red(cv::Mat &src, cv::Mat &dst) {
 
     for (int i = 0; i < dst.rows; i++)
     {
-        cv::Vec3b *srcPtr = src.ptr<cv::Vec3b>(i); // row pointer for src
+        cv::Vec3b *srcPtr = src.ptr<cv::Vec3b>(i);      // row pointer for src
         cv::Vec3b *hsvPtr = hsvImage.ptr<cv::Vec3b>(i); // row pointer for hsv image
-        cv::Vec3b *dstPtr = dst.ptr<cv::Vec3b>(i); // row pointer for dst
+        cv::Vec3b *dstPtr = dst.ptr<cv::Vec3b>(i);      // row pointer for dst
         for (int j = 0; j < dst.cols; j++)
         {
             uchar H = hsvPtr[j][0]; // hue (color)
             uchar S = hsvPtr[j][1]; // saturation
             uchar V = hsvPtr[j][2]; // value (brightness)
             // if the color is red, retain in the image, otherwise leave as grayscale
-            if ((H < 3 || H > 170) && S > 100 && V > 50) {
+            if ((H < 3 || H > 170) && S > 100 && V > 50)
+            {
                 dstPtr[j] = srcPtr[j];
             }
         }
@@ -388,3 +390,23 @@ int only_red(cv::Mat &src, cv::Mat &dst) {
 
     return(0);
 }
+
+// Mirrors the image with respect to the vertical axis at the center of the image
+// Args: 8-bit color src image     Return: 8-bit dst image
+int mirror(cv::Mat &src, cv::Mat &dst)
+{
+    src.copyTo(dst);
+    int cols = dst.cols;
+
+    for (int i = 0; i < dst.rows; i++)
+    {
+        cv::Vec3b *srcPtr = src.ptr<cv::Vec3b>(i); // row pointer for src
+        cv::Vec3b *dstPtr = dst.ptr<cv::Vec3b>(i); // row pointer for dst
+        for (int j = cols / 2; j < cols; j++)
+        {
+            dstPtr[j] = srcPtr[cols - 1 - j];
+        }
+    }
+    return(0);
+}
+

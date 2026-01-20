@@ -103,6 +103,12 @@ int main(int argc, char *argv[])
         case 'r':
             only_red(frame, mod);
             break;
+        case 'w':
+            mirror(frame, mod);
+            break;
+        // case 'k':
+        //     cv::medianBlur(frame, mod, 15);
+        //     break;
         }
 
         cv::imshow("Live Video", mod);
@@ -135,6 +141,10 @@ int main(int argc, char *argv[])
             imgType = 'i'; // inverse of gradient magnitude
         else if (key == 'r')
             imgType = 'r'; // only red
+        else if (key == 'w')
+            imgType = 'w'; // mirror
+        // else if (key == 'k')
+        //     imgType = 'k'; // median blur
     }
 
     delete capdev;
