@@ -7,8 +7,8 @@
 #include <cmath>
 #include "opencv2/opencv.hpp"
 
-// Convert image to greyscale by manipulating each pixel RGB value
-// Args: color src image     Return: greyscale dst image
+// Convert image to grayscale by manipulating each pixel RGB value
+// Args: color src image     Return: grayscale dst image
 int greyscale(cv::Mat &src, cv::Mat &dst)
 {
     src.copyTo(dst); // makes a copy of the image
@@ -356,4 +356,35 @@ int inv_magnitude(cv::Mat &sx, cv::Mat &sy, cv::Mat &dst)
     }
 
     return (0);
+}
+
+// Only leaves red colors in the image and turns the rest to grayscale
+// Uses HSV values to correctly identify red colors (regardless of brightness and contrast)
+// Args: color src image     Return: grayscale dst image (with only red colors)
+int only_red(cv::Mat &src, cv::Mat &dst) {
+    static cv::Mat hsvImage;
+    cv::cvtColor(src, hsvImage, cv::COLOR_BGR2HSV); // creates new HSV image
+    static cv::Mat gray;
+    // convert image to grayscale and back to 3 color channels
+    cv::cvtColor(src, gray, cv::COLOR_BGR2GRAY);
+    cv::cvtColor(gray, dst, cv::COLOR_GRAY2BGR);
+
+    for (int i = 0; i < dst.rows; i++)
+    {
+        cv::Vec3b *srcPtr = src.ptr<cv::Vec3b>(i); // row pointer for src
+        cv::Vec3b *hsvPtr = hsvImage.ptr<cv::Vec3b>(i); // row pointer for hsv image
+        cv::Vec3b *dstPtr = dst.ptr<cv::Vec3b>(i); // row pointer for dst
+        for (int j = 0; j < dst.cols; j++)
+        {
+            uchar H = hsvPtr[j][0]; // hue (color)
+            uchar S = hsvPtr[j][1]; // saturation
+            uchar V = hsvPtr[j][2]; // value (brightness)
+            // if the color is red, retain in the image, otherwise leave as grayscale
+            if ((H < 3 || H > 170) && S > 100 && V > 50) {
+                dstPtr[j] = srcPtr[j];
+            }
+        }
+    }
+
+    return(0);
 }

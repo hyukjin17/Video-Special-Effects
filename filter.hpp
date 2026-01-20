@@ -15,3 +15,4 @@ int drawBoxes(cv::Mat &frame, std::vector<cv::Rect> &faces, int minWidth = 50, f
 int magnitude(cv::Mat &sx, cv::Mat &sy, cv::Mat &dst);
 int inv_magnitude(cv::Mat &sx, cv::Mat &sy, cv::Mat &dst);
 int blurQuantize(cv::Mat &src, cv::Mat &dst, int levels);
+int only_red(cv::Mat &src, cv::Mat &dst);

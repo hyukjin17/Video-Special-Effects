@@ -100,6 +100,9 @@ int main(int argc, char *argv[])
             }
             mod = frame;
             break;
+        case 'r':
+            only_red(frame, mod);
+            break;
         }
 
         cv::imshow("Live Video", mod);
@@ -111,9 +114,9 @@ int main(int argc, char *argv[])
         else if (key == 'c')
             imgType = 'c'; // original color
         else if (key == 'g')
-            imgType = 'g'; // cvtColor greyscale
+            imgType = 'g'; // cvtColor grayscale
         else if (key == 'h')
-            imgType = 'h'; // alternate greyscale
+            imgType = 'h'; // alternate grayscale
         else if (key == 's')
             imgType = 's'; // sepia tone
         else if (key == 'b')
@@ -130,6 +133,8 @@ int main(int argc, char *argv[])
             imgType = 'l'; // blur & quantize
         else if (key == 'i')
             imgType = 'i'; // inverse of gradient magnitude
+        else if (key == 'r')
+            imgType = 'r'; // only red
     }
 
     delete capdev;
