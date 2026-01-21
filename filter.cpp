@@ -8,7 +8,6 @@
 #include "opencv2/opencv.hpp"
 #include "faceDetect/faceDetect.h"
 
-
 // Convert image to grayscale by manipulating each pixel RGB value
 // Args: color src image     Return: grayscale dst image
 int grayscale(cv::Mat &src, cv::Mat &dst)
@@ -449,6 +448,42 @@ int laplacian(cv::Mat &src, cv::Mat &dst)
     // converts the image back to 8-bit by scaling the values into the range [0, 255]
     // adds a 10x scaling factor to make the edges more visible (blurring makes the second derivative darker)
     cv::convertScaleAbs(temp, dst, 10.0);
+
+    return (0);
+}
+
+int face_detect(cv::Mat &src, cv::Mat &dst)
+{
+    cv::Mat gray;                     // grayscale frame used for face detection
+    std::vector<cv::Rect> faces;      // used for face detection
+    static cv::Rect last(0, 0, 0, 0); // rectangle around the face
+    // convert the image to grayscale
+    cv::cvtColor(src, gray, cv::COLOR_BGR2GRAY, 0);
+
+    detectFaces(gray, faces);
+    src.copyTo(dst);
+    drawBoxes(dst, faces); // draw boxes around the faces
+
+    // add a little smoothing by averaging the last two detections
+    if (faces.size() > 0)
+    {
+        if (last.width == 0)
+        {
+            last = faces[0]; // first detection, find the face directly
+        }
+        else
+        {
+            // smooth across 2 frames afterwards
+            last.x = (faces[0].x + last.x) / 2;
+            last.y = (faces[0].y + last.y) / 2;
+            last.width = (faces[0].width + last.width) / 2;
+            last.height = (faces[0].height + last.height) / 2;
+        }
+    }
+    else
+    {
+        last = cv::Rect(0, 0, 0, 0);
+    }
 
     return (0);
 }
