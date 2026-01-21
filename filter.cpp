@@ -452,6 +452,8 @@ int laplacian(cv::Mat &src, cv::Mat &dst)
     return (0);
 }
 
+// Detects the face and puts a rectangle around it
+// Args: 8-bit color src image     Return: 8-bit dst image with a rectangle around the face
 int face_detect(cv::Mat &src, cv::Mat &dst)
 {
     cv::Mat gray;                     // grayscale frame used for face detection
@@ -482,9 +484,53 @@ int face_detect(cv::Mat &src, cv::Mat &dst)
     }
     else
     {
+        // reset the rectangle if the face is no longer visible
         last = cv::Rect(0, 0, 0, 0);
     }
 
+    return (0);
+}
+
+// Detects the face and turns everything other than the face into grayscale
+// Args: 8-bit color src image     Return: 8-bit grayscale dst image with the face in color
+int face_grayscale(cv::Mat &src, cv::Mat &dst)
+{
+    static cv::Mat gray;
+    // convert image to grayscale and back to 3 color channels
+    cv::cvtColor(src, gray, cv::COLOR_BGR2GRAY);
+    cv::cvtColor(gray, dst, cv::COLOR_GRAY2BGR);
+
+    std::vector<cv::Rect> faces;      // used for face detection
+    static cv::Rect last(0, 0, 0, 0); // rectangle around the face
+
+    detectFaces(gray, faces);
+    // add a little smoothing by averaging the last two detections
+    if (faces.size() > 0)
+    {
+        if (last.width == 0)
+        {
+            last = faces[0]; // first detection, find the face directly
+        }
+        else
+        {
+            // smooth across 2 frames afterwards
+            last.x = (faces[0].x + last.x) / 2;
+            last.y = (faces[0].y + last.y) / 2;
+            last.width = (faces[0].width + last.width) / 2;
+            last.height = (faces[0].height + last.height) / 2;
+        }
+    }
+    else
+    {
+        // reset the rectangle if the face is no longer visible
+        last = cv::Rect(0, 0, 0, 0);
+    }
+
+    if (last.width > 0)
+    {
+        // if the face is detected, copy the color image rectangle into the dst image
+        src(last).copyTo(dst(last));
+    }
     return (0);
 }
 
