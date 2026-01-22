@@ -21,3 +21,4 @@ int face_grayscale(cv::Mat &src, cv::Mat &dst);
 int embossing(cv::Mat &src, cv::Mat &dst);
 int embossing_2(cv::Mat &sx, cv::Mat &sy, cv::Mat &dst);
 int motion_detect(cv::Mat &src, cv::Mat &dst);
+int horizontal_scan(cv::Mat &src, cv::Mat &dst);

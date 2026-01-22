@@ -607,10 +607,10 @@ int embossing_2(cv::Mat &sx, cv::Mat &sy, cv::Mat &dst)
 }
 
 // Detects motion by comparing the current frame with the previous frame
-// Only displays "moving pixels" and leaves the rest black
+// Only displays "moving pixels" as white and leaves the rest black
 // Has an unintended artifact inside objects (similar color regions are not detected as motion)
 // Since small motion inside the object goes from one color to a similar color, the insides of objects remain black (motion is not detected)
-// Args: 8-bit color src image     Return: 8-bit color dst image
+// Args: 8-bit color src image     Return: 8-bit black and white dst image
 int motion_detect(cv::Mat &src, cv::Mat &dst)
 {
     static cv::Mat prev;
@@ -636,12 +636,37 @@ int motion_detect(cv::Mat &src, cv::Mat &dst)
 
             // only displays the pixel if the total difference is > 70
             if (diff > 70)
-                dstPtr[j] = srcPtr[j];
+                dstPtr[j] = cv::Vec3b(255, 255, 255);
         }
     }
 
     // update the prev to the current src image
     src.copyTo(prev);
+
+    return (0);
+}
+
+// Scans the image horizontally and only updates a thin line of pixels at every frame
+// Has a cool rolling shutter effect
+// Args: 8-bit color src image     Return: 8-bit color dst image
+int horizontal_scan(cv::Mat &src, cv::Mat &dst)
+{
+    static cv::Mat prev;
+    static int x = 0;
+
+    if (prev.empty())
+    {
+        prev.create(src.size(), src.type());
+        prev = cv::Scalar(0, 0, 0);
+    }
+
+    int slitWidth = 5;
+    cv::Rect slit(x, 0, slitWidth, src.rows);
+    src(slit).copyTo(prev(slit));
+
+    x = (x + slitWidth) % dst.cols;
+    prev.copyTo(dst);
+    cv::line(dst, cv::Point(x, 0), cv::Point(x, dst.rows), cv::Scalar(0, 255, 0), 2);
 
     return (0);
 }

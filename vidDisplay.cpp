@@ -111,6 +111,9 @@ int main(int argc, char *argv[])
         case '1':
             motion_detect(frame, mod);
             break;
+        case '2':
+            horizontal_scan(frame, mod);
+            break;
         }
 
         cv::imshow("Live Video", mod);
@@ -157,6 +160,8 @@ int main(int argc, char *argv[])
             imgType = 'j'; // embossing 2
         else if (key == '1')
             imgType = '1'; // motion detect (only moving objects appear on screen)
+        else if (key == '2')
+            imgType = '2'; // horizontal scan
     }
 
     delete capdev;
