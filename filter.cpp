@@ -4,6 +4,7 @@
     Applies different filters to the video stream
 */
 
+#include <cstdlib>
 #include <cmath>
 #include "opencv2/opencv.hpp"
 #include "faceDetect/faceDetect.h"
@@ -601,6 +602,46 @@ int embossing_2(cv::Mat &sx, cv::Mat &sy, cv::Mat &dst)
             }
         }
     }
+
+    return (0);
+}
+
+// Detects motion by comparing the current frame with the previous frame
+// Only displays "moving pixels" and leaves the rest black
+// Has an unintended artifact inside objects (similar color regions are not detected as motion)
+// Since small motion inside the object goes from one color to a similar color, the insides of objects remain black (motion is not detected)
+// Args: 8-bit color src image     Return: 8-bit color dst image
+int motion_detect(cv::Mat &src, cv::Mat &dst)
+{
+    static cv::Mat prev;
+    if (prev.empty())
+    {
+        src.copyTo(prev);
+    }
+
+    dst.create(src.size(), src.type());
+    dst = cv::Scalar(0, 0, 0);
+    for (int i = 0; i < dst.rows; i++)
+    {
+        cv::Vec3b *srcPtr = src.ptr<cv::Vec3b>(i);   // row pointer for src image
+        cv::Vec3b *prevPtr = prev.ptr<cv::Vec3b>(i); // row pointer for prev image
+        cv::Vec3b *dstPtr = dst.ptr<cv::Vec3b>(i);   // row pointer for dst image
+        for (int j = 0; j < dst.cols; j++)
+        {
+            // add up all the differences in RGB and only copy pixels that have "motion"
+            int diffB = std::abs(srcPtr[j][0] - prevPtr[j][0]);
+            int diffG = std::abs(srcPtr[j][1] - prevPtr[j][1]);
+            int diffR = std::abs(srcPtr[j][2] - prevPtr[j][2]);
+            int diff = diffB + diffG + diffR;
+
+            // only displays the pixel if the total difference is > 70
+            if (diff > 70)
+                dstPtr[j] = srcPtr[j];
+        }
+    }
+
+    // update the prev to the current src image
+    src.copyTo(prev);
 
     return (0);
 }

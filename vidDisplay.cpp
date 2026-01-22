@@ -108,6 +108,9 @@ int main(int argc, char *argv[])
             sobelY3x3(frame, temp2);
             embossing_2(temp, temp2, mod);
             break;
+        case '1':
+            motion_detect(frame, mod);
+            break;
         }
 
         cv::imshow("Live Video", mod);
@@ -152,6 +155,8 @@ int main(int argc, char *argv[])
             imgType = 'e'; // embossing
         else if (key == 'j')
             imgType = 'j'; // embossing 2
+        else if (key == '1')
+            imgType = '1'; // motion detect (only moving objects appear on screen)
     }
 
     delete capdev;
