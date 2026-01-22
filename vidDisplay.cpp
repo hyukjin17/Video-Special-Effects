@@ -31,9 +31,7 @@ int main(int argc, char *argv[])
     cv::Mat mod;                      // modified frame
     cv::Mat temp;
     cv::Mat temp2;
-    cv::Mat grey;                // greyscale frame used for face detection
-    std::vector<cv::Rect> faces; // used for face detection
-    cv::Rect last(0, 0, 0, 0);   // rectangle around the face
+
     char imgType = 'c';          // sets img type for the video stream (default is color)
 
     for (;;) // infinite loop until break
@@ -49,13 +47,13 @@ int main(int argc, char *argv[])
         switch (imgType)
         {
         case 'c':
-            mod = frame;
+            frame.copyTo(mod);
             break;
         case 'g':
             cv::cvtColor(frame, mod, cv::COLOR_BGR2GRAY); // convert to grayscale image
             break;
         case 'h':
-            greyscale(frame, mod);
+            grayscale(frame, mod);
             break;
         case 's':
             sepia(frame, mod);
@@ -85,20 +83,7 @@ int main(int argc, char *argv[])
             blurQuantize(frame, mod, 10);
             break;
         case 'f':
-            // convert the image to greyscale
-            cv::cvtColor(frame, grey, cv::COLOR_BGR2GRAY, 0);
-            detectFaces(grey, faces);
-            drawBoxes(frame, faces); // draw boxes around the faces
-
-            // add a little smoothing by averaging the last two detections
-            if (faces.size() > 0)
-            {
-                last.x = (faces[0].x + last.x) / 2;
-                last.y = (faces[0].y + last.y) / 2;
-                last.width = (faces[0].width + last.width) / 2;
-                last.height = (faces[0].height + last.height) / 2;
-            }
-            mod = frame;
+            face_detect(frame, mod);
             break;
         case 'r':
             only_red(frame, mod);
@@ -106,9 +91,23 @@ int main(int argc, char *argv[])
         case 'w':
             mirror(frame, mod);
             break;
-        // case 'k':
-        //     cv::medianBlur(frame, mod, 15);
-        //     break;
+        case 'k':
+            cv::medianBlur(frame, mod, 5);
+            break;
+        case 'z':
+            laplacian(frame, mod);
+            break;
+        case 't':
+            face_grayscale(frame, mod);
+            break;
+        case 'e':
+            embossing(frame, mod);
+            break;
+        case 'j':
+            sobelX3x3(frame, temp);
+            sobelY3x3(frame, temp2);
+            embossing_2(temp, temp2, mod);
+            break;
         }
 
         cv::imshow("Live Video", mod);
@@ -143,8 +142,16 @@ int main(int argc, char *argv[])
             imgType = 'r'; // only red
         else if (key == 'w')
             imgType = 'w'; // mirror
-        // else if (key == 'k')
-        //     imgType = 'k'; // median blur
+        else if (key == 'k')
+            imgType = 'k'; // median blur
+        else if (key == 'z')
+            imgType = 'z'; // laplacian
+        else if (key == 't')
+            imgType = 't'; // grayscale with only face in color
+        else if (key == 'e')
+            imgType = 'e'; // embossing
+        else if (key == 'j')
+            imgType = 'j'; // embossing 2
     }
 
     delete capdev;

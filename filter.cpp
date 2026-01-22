@@ -534,3 +534,73 @@ int face_grayscale(cv::Mat &src, cv::Mat &dst)
     return (0);
 }
 
+/*
+Embossing effect using a 5x5 diagonal filter:
+[[0, 0, 0, 0, 1]
+ [0, 0, 0, 1, 0]
+ [0, 0, 0, 0, 0]
+ [0,-1, 0, 0, 0]
+ [-1,0, 0, 0, 0]]
+Deeper embossing effect due to a larger 5x5 filter
+
+ Args: 8-bit color src image     Return: 8-bit embossed dst image
+*/
+
+int embossing(cv::Mat &src, cv::Mat &dst)
+{
+    src.copyTo(dst);
+
+    for (int i = 2; i < dst.rows - 2; i++)
+    {
+        cv::Vec3b *p1 = src.ptr<cv::Vec3b>(i - 2);
+        cv::Vec3b *p2 = src.ptr<cv::Vec3b>(i - 1);
+        cv::Vec3b *p3 = src.ptr<cv::Vec3b>(i + 1);
+        cv::Vec3b *p4 = src.ptr<cv::Vec3b>(i + 2);
+        cv::Vec3b *dstPtr = dst.ptr<cv::Vec3b>(i);
+
+        for (int j = 2; j < dst.cols - 2; j++)
+        {
+            // loop over RGB color channels
+            for (int k = 0; k < 3; k++)
+            {
+                // apply the filter and add 128 to increase intensity
+                int val = p1[j + 2][k] + p2[j + 1][k] - p3[j - 1][k] - p4[j - 2][k] + 128;
+                // clamp values to 255
+                if (val > 255)
+                    val = 255;
+                dstPtr[j][k] = (uchar)val;
+            }
+        }
+    }
+
+    return (0);
+}
+
+// Embossing filter using the Sobel filter outputs
+// Takes the dot product of the Sobel output values with the given direction (45 deg)
+// Has a similar effect of applying a 3x3 diagonal filter
+// Args: 16-bit signed short Sobel X and Y images     Return: 8-bit embossed dst image
+int embossing_2(cv::Mat &sx, cv::Mat &sy, cv::Mat &dst)
+{
+    dst.create(sx.size(), CV_8UC3);
+    for (int i = 0; i < dst.rows; i++)
+    {
+        cv::Vec3s *sxPtr = sx.ptr<cv::Vec3s>(i); // row pointer for sx image
+        cv::Vec3s *syPtr = sy.ptr<cv::Vec3s>(i); // row pointer for sy image
+        cv::Vec3b *ptr = dst.ptr<cv::Vec3b>(i);  // row pointer for dst image
+        for (int j = 0; j < dst.cols; j++)
+        {
+            for (int k = 0; k < 3; k++)
+            {
+                // add 128 to increase intensity
+                float val = sxPtr[j][k] * 0.7071 + syPtr[j][k] * 0.7071 + 128;
+                // clamp the values to 255
+                if (val > 255)
+                    val = 255;
+                ptr[j][k] = (uchar)val;
+            }
+        }
+    }
+
+    return (0);
+}
