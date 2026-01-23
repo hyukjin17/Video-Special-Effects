@@ -544,7 +544,7 @@ Embossing effect using a 5x5 diagonal filter:
  [-1,0, 0, 0, 0]]
 Deeper embossing effect due to a larger 5x5 filter
 
- Args: 8-bit color src image     Return: 8-bit embossed dst image
+Args: 8-bit color src image     Return: 8-bit embossed dst image
 */
 
 int embossing(cv::Mat &src, cv::Mat &dst)
@@ -670,3 +670,38 @@ int horizontal_scan(cv::Mat &src, cv::Mat &dst)
 
     return (0);
 }
+
+// Creates a motion blur effect by blending the previous frame with the current frame
+// Can adjust the decay rate using the alpha value
+// Args: 8-bit color src image     Return: 8-bit color dst image
+int motion_blur(cv::Mat &src, cv::Mat &dst)
+{
+    static cv::Mat prev;
+    float alpha = 0.7; // decay rate for the motion blur frame
+
+    // fill the prev image with src initially
+    if (prev.empty())
+        src.copyTo(prev);
+
+    dst.create(src.size(), src.type());
+    for (int i = 0; i < dst.rows; i++)
+    {
+        cv::Vec3b *srcPtr = src.ptr<cv::Vec3b>(i);
+        cv::Vec3b *prevPtr = prev.ptr<cv::Vec3b>(i);
+        cv::Vec3b *dstPtr = dst.ptr<cv::Vec3b>(i);
+        for (int j = 0; j < dst.cols; j++)
+        {
+            for (int k = 0; k < 3; k++)
+            {
+                // blend the 2 frames based on the alpha value
+                dstPtr[j][k] = (uchar)(alpha * prevPtr[j][k] + (1 - alpha) * srcPtr[j][k]);
+            }
+        }
+    }
+
+    // update the prev frame
+    dst.copyTo(prev);
+
+    return (0);
+}
+
