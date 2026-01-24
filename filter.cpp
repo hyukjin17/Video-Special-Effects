@@ -705,3 +705,110 @@ int motion_blur(cv::Mat &src, cv::Mat &dst)
     return (0);
 }
 
+// Ghost images are created that are delayed from the current frame
+// 3 ghost frames that are several frames apart are blended into the image
+// Ghost frames are only updated every nth frame (based on the delay) and slowly decay in transparency
+// Intermittent updates cause the video to be a bit choppy (improved version is shown below)
+// Args: 8-bit color src image     Return: 8-bit color dst image
+int ghost(cv::Mat &src, cv::Mat &dst)
+{
+    static cv::Mat prev1;
+    static cv::Mat prev2;
+    static cv::Mat prev3;
+    static int step = 0;
+    int ghostDelay = 3; // each ghost frame is delayed by this many frames from one another
+
+    if (prev1.empty())
+        src.copyTo(prev1);
+    if (prev2.empty())
+        src.copyTo(prev2);
+    if (prev3.empty())
+        src.copyTo(prev3);
+
+    dst.create(src.size(), src.type());
+    for (int i = 0; i < dst.rows; i++)
+    {
+        cv::Vec3b *srcPtr = src.ptr<cv::Vec3b>(i);
+        cv::Vec3b *prevPtr1 = prev1.ptr<cv::Vec3b>(i);
+        cv::Vec3b *prevPtr2 = prev2.ptr<cv::Vec3b>(i);
+        cv::Vec3b *prevPtr3 = prev3.ptr<cv::Vec3b>(i);
+        cv::Vec3b *dstPtr = dst.ptr<cv::Vec3b>(i);
+        for (int j = 0; j < dst.cols; j++)
+        {
+            for (int k = 0; k < 3; k++)
+            {
+                dstPtr[j][k] = (uchar)(
+                    0.5 * srcPtr[j][k] + 0.25 * prevPtr1[j][k] + 0.15 * prevPtr2[j][k] + 0.1 * prevPtr3[j][k]);
+            }
+        }
+    }
+
+    if (step == 0)
+    {
+        prev2.copyTo(prev3);
+        prev1.copyTo(prev2);
+        dst.copyTo(prev1);
+    }
+    step = (step + 1) % ghostDelay;
+
+    return (0);
+}
+
+// Ghost images are created that are delayed from the current frame
+// 3 ghost frames that are 10 frames apart are blended into the image
+// Ghost images are updated smoothly every frame using a circular buffer that contains the last 31 frames
+// Every 10th frame in the circular buffer is blended into the image and the counter is incremented every frame
+// Args: 8-bit color src image     Return: 8-bit color dst image
+int ghost_smooth(cv::Mat &src, cv::Mat &dst)
+{
+    // create a circular buffer to hold older frames instead of having individual cv::Mat frames
+    // need 31 frames to safely access 30 frames back
+    static std::vector<cv::Mat> buff;
+    static int index = 0; // index keeps track of position in the circular buffer
+    int buffLen = 31; // enough to hold 3 previous ghosts at intervals of 10
+
+    // fill the buffer initially with the src frame
+    if (buff.empty())
+    {
+        for (int i = 0; i < buffLen; i++)
+        {
+            // use the clone command to create a deep copy instead of another reference
+            buff.push_back(src.clone());
+        }
+    }
+
+    // adds the newest frame to the circular buffer
+    // replaces the oldest saved frame
+    src.copyTo(buff[index]);
+
+    // creates the "ghost frames" in 10 frame increments
+    // instead of copying the frames, uses reference (&) for efficiency
+    cv::Mat &prev1 = buff[(buffLen - 10 + index) % buffLen];
+    cv::Mat &prev2 = buff[(buffLen - 20 + index) % buffLen];
+    cv::Mat &prev3 = buff[(buffLen - 30 + index) % buffLen];
+
+    dst.create(src.size(), src.type());
+
+    for (int i = 0; i < dst.rows; i++)
+    {
+        cv::Vec3b *srcPtr = src.ptr<cv::Vec3b>(i);
+        cv::Vec3b *p1Ptr = prev1.ptr<cv::Vec3b>(i);
+        cv::Vec3b *p2Ptr = prev2.ptr<cv::Vec3b>(i);
+        cv::Vec3b *p3Ptr = prev3.ptr<cv::Vec3b>(i);
+        cv::Vec3b *dstPtr = dst.ptr<cv::Vec3b>(i);
+
+        for (int j = 0; j < dst.cols; j++)
+        {
+            for (int k = 0; k < 3; k++)
+            {
+                dstPtr[j][k] = (uchar)(
+                    srcPtr[j][k] * 0.50 + p1Ptr[j][k] * 0.25 + p2Ptr[j][k] * 0.15 + p3Ptr[j][k] * 0.10);
+            }
+        }
+    }
+
+    // increments the index and makes sure it wraps around
+    index = (index + 1) % buffLen;
+
+    return (0);
+}
