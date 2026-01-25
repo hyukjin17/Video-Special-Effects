@@ -19,6 +19,7 @@ void applyFilter(char imgType, cv::Mat &src, cv::Mat &dst)
     int blur_amount;
     int frame_delay;
     int slit_width;
+    int levels;
 
     // select which image type to display
     switch (imgType)
@@ -57,7 +58,9 @@ void applyFilter(char imgType, cv::Mat &src, cv::Mat &dst)
         inv_magnitude(temp, temp2, dst);
         break;
     case 'l':
-        blurQuantize(src, dst, 10);
+        levels = cv::getTrackbarPos("Levels", "Live Video");
+        levels = levels < 2 ? 2 : levels;
+        blurQuantize(src, dst, levels);
         break;
     case 'f':
         face_detect(src, dst);
@@ -149,6 +152,9 @@ void updateWindow(char imgType)
 
     switch (imgType)
     {
+    case 'l': // blur & quantize
+        cv::createTrackbar("Levels", "Live Video", nullptr, 30);
+        break;
     case '2': // horizontal scan
         cv::createTrackbar("Slit Width", "Live Video", nullptr, 15);
         break;
