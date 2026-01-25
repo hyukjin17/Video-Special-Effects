@@ -11,9 +11,12 @@
 
 // Applies the chosen filter to the image
 // Args: filter type, 8-bit color src image     Return: 8-bit filtered dst image
-int applyFilter(char imgType, cv::Mat &src, cv::Mat &dst)
+void applyFilter(char imgType, cv::Mat &src, cv::Mat &dst)
 {
     cv::Mat temp, temp2; // temporary frames for transformations
+
+    // Track bar variables
+    int blur_amount;
 
     // select which image type to display
     switch (imgType)
@@ -84,7 +87,9 @@ int applyFilter(char imgType, cv::Mat &src, cv::Mat &dst)
         horizontal_scan(src, dst);
         break;
     case '3':
-        motion_blur(src, dst);
+        blur_amount = cv::getTrackbarPos("Blur Amount", "Live Video");
+        blur_amount = blur_amount < 50 ? 50 : blur_amount;
+        motion_blur(src, dst, blur_amount);
         break;
     case '4':
         ghost(src, dst);
@@ -93,8 +98,6 @@ int applyFilter(char imgType, cv::Mat &src, cv::Mat &dst)
         ghost_smooth(src, dst);
         break;
     }
-
-    return (0);
 }
 
 // Checks if the key press is a valid filter type from the list
@@ -103,31 +106,44 @@ bool isValidType(char imgType)
 {
     switch (imgType)
     {
-        case 'c': // original color
-        case 'g': // cvtColor grayscale
-        case 'h': // alternate grayscale
-        case 's': // sepia tone
-        case 'b': // 5x5 blur
-        case 'x': // Sobel X 3x3
-        case 'y': // Sobel Y 3x3
-        case 'm': // gradient magnitude
-        case 'i': // inverse of gradient magnitude
-        case 'l': // blur & quantize
-        case 'f': // face detect
-        case 'r': // only red colors
-        case 'w': // mirror (wrt central y axis)
-        case 'z': // laplacian (2nd derivative)
-        case 't': // grayscale with only face in color
-        case 'e': // embossing
-        case 'j': // embossing 2
-        case '1': // motion detect (only movement appears white on screen)
-        case '2': // horizontal scan
-        case '3': // motion blur
-        case '4': // ghost effect
-        case '5': // smoother ghost effect
-            return true; // imgType found in the list
-        default:
-            return false; // non-existing type
+    case 'c':        // original color
+    case 'g':        // cvtColor grayscale
+    case 'h':        // alternate grayscale
+    case 's':        // sepia tone
+    case 'b':        // 5x5 blur
+    case 'x':        // Sobel X 3x3
+    case 'y':        // Sobel Y 3x3
+    case 'm':        // gradient magnitude
+    case 'i':        // inverse of gradient magnitude
+    case 'l':        // blur & quantize
+    case 'f':        // face detect
+    case 'r':        // only red colors
+    case 'w':        // mirror (wrt central y axis)
+    case 'z':        // laplacian (2nd derivative)
+    case 't':        // grayscale with only face in color
+    case 'e':        // embossing
+    case 'j':        // embossing 2
+    case '1':        // motion detect (only movement appears white on screen)
+    case '2':        // horizontal scan
+    case '3':        // motion blur
+    case '4':        // ghost effect
+    case '5':        // smoother ghost effect
+        return true; // imgType found in the list
+    default:
+        return false; // non-existing type
+    }
+}
+
+// Update the video window to display track bars for certain filters
+void updateWindow(char imgType)
+{
+    cv::destroyWindow("Live Video");
+    cv::namedWindow("Live Video", 0);
+    cv::resizeWindow("Live Video", 1920, 1080); // manually set the window size to 1080p
+
+    if (imgType == '3') // motion blur
+    {
+        cv::createTrackbar("Blur Amount", "Live Video", nullptr, 100);
     }
 }
 
@@ -148,7 +164,8 @@ int main(int argc, char *argv[])
                   (int)capdev->get(cv::CAP_PROP_FRAME_HEIGHT));
     printf("Expected size: %d x %d\n", refS.width, refS.height);
 
-    cv::namedWindow("Live Video", 1); // identifies a window and automatically sizes it to the image
+    cv::namedWindow("Live Video", 0); // identifies a window and manually set the window size to 1080p
+    cv::resizeWindow("Live Video", 1920, 1080);
     cv::Mat frame;                    // initial frame
     cv::Mat mod;                      // modified frame
 
@@ -162,6 +179,14 @@ int main(int argc, char *argv[])
         {
             printf("Frame is empty\n");
             break;
+        }
+
+        // update the window if the user has changed the filter type
+        // used to update the track bar on some filters (because not all filters have a track bar)
+        if (imgType != lastType)
+        {
+            updateWindow(imgType);
+            lastType = imgType;
         }
 
         // apply the chosen filter and display it in the window
