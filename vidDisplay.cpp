@@ -17,6 +17,8 @@ void applyFilter(char imgType, cv::Mat &src, cv::Mat &dst)
 
     // Track bar variables
     int blur_amount;
+    int frame_delay;
+    int slit_width;
 
     // select which image type to display
     switch (imgType)
@@ -84,7 +86,9 @@ void applyFilter(char imgType, cv::Mat &src, cv::Mat &dst)
         motion_detect(src, dst);
         break;
     case '2':
-        horizontal_scan(src, dst);
+        slit_width = cv::getTrackbarPos("Slit Width", "Live Video");
+        slit_width = slit_width < 2 ? 2 : slit_width;
+        horizontal_scan(src, dst, slit_width);
         break;
     case '3':
         blur_amount = cv::getTrackbarPos("Blur Amount", "Live Video");
@@ -92,7 +96,9 @@ void applyFilter(char imgType, cv::Mat &src, cv::Mat &dst)
         motion_blur(src, dst, blur_amount);
         break;
     case '4':
-        ghost(src, dst);
+        frame_delay = cv::getTrackbarPos("Frame Delay", "Live Video");
+        frame_delay = frame_delay < 2 ? 2 : frame_delay;
+        ghost(src, dst, frame_delay);
         break;
     case '5':
         ghost_smooth(src, dst);
@@ -141,9 +147,17 @@ void updateWindow(char imgType)
     cv::namedWindow("Live Video", 0);
     cv::resizeWindow("Live Video", 1920, 1080); // manually set the window size to 1080p
 
-    if (imgType == '3') // motion blur
+    switch (imgType)
     {
+    case '2': // horizontal scan
+        cv::createTrackbar("Slit Width", "Live Video", nullptr, 15);
+        break;
+    case '3': // motion blur
         cv::createTrackbar("Blur Amount", "Live Video", nullptr, 100);
+        break;
+    case '4': // ghost effect
+        cv::createTrackbar("Frame Delay", "Live Video", nullptr, 10);
+        break;
     }
 }
 
@@ -166,8 +180,8 @@ int main(int argc, char *argv[])
 
     cv::namedWindow("Live Video", 0); // identifies a window and manually set the window size to 1080p
     cv::resizeWindow("Live Video", 1920, 1080);
-    cv::Mat frame;                    // initial frame
-    cv::Mat mod;                      // modified frame
+    cv::Mat frame; // initial frame
+    cv::Mat mod;   // modified frame
 
     char imgType = 'c';  // sets img type for the video stream (default is color)
     char lastType = 'c'; // tracks previous state for UI update (trackbar)

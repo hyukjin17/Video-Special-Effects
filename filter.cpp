@@ -171,12 +171,10 @@ int sobelX3x3(cv::Mat &src, cv::Mat &dst)
 {
     static cv::Mat temp;
     // makes an intermediate temp matrix
-    temp.create(src.size(), CV_16SC3);
-    temp = cv::Scalar(0, 0, 0);
+    temp = cv::Mat::zeros(src.size(), CV_16SC3);
 
     // makes a dst matrix for the final image
-    dst.create(src.size(), CV_16SC3);
-    dst = cv::Scalar(0, 0, 0);
+    dst = cv::Mat::zeros(src.size(), CV_16SC3);
 
     // first pass (horizontal filter)
     for (int i = 0; i < dst.rows; i++)
@@ -228,12 +226,10 @@ int sobelY3x3(cv::Mat &src, cv::Mat &dst)
 {
     static cv::Mat temp;
     // makes an intermediate temp matrix
-    temp.create(src.size(), CV_16SC3);
-    temp = cv::Scalar(0, 0, 0);
+    temp = cv::Mat::zeros(src.size(), CV_16SC3);
 
     // makes a dst matrix for the final image
-    dst.create(src.size(), CV_16SC3);
-    dst = cv::Scalar(0, 0, 0);
+    dst = cv::Mat::zeros(src.size(), CV_16SC3);
 
     // horizontal part of Sobel Y filter
     int filterX[3] = {1, 2, 1};
@@ -424,8 +420,7 @@ int laplacian(cv::Mat &src, cv::Mat &dst)
     blur5x5_2(src, blur); // removes noise from the image (standard practice before a laplacian)
 
     static cv::Mat temp;
-    temp.create(src.size(), CV_16SC3);
-    temp = cv::Scalar(0, 0, 0);
+    temp = cv::Mat::zeros(src.size(), CV_16SC3);
 
     for (int i = 1; i < dst.rows - 1; i++)
     {
@@ -619,8 +614,7 @@ int motion_detect(cv::Mat &src, cv::Mat &dst)
         src.copyTo(prev);
     }
 
-    dst.create(src.size(), src.type());
-    dst = cv::Scalar(0, 0, 0);
+    dst = cv::Mat::zeros(src.size(), src.type());
     for (int i = 0; i < dst.rows; i++)
     {
         cv::Vec3b *srcPtr = src.ptr<cv::Vec3b>(i);   // row pointer for src image
@@ -635,7 +629,7 @@ int motion_detect(cv::Mat &src, cv::Mat &dst)
             int diff = diffB + diffG + diffR;
 
             // only displays the pixel if the total difference is > 70
-            if (diff > 70)
+            if (diff > 100)
                 dstPtr[j] = cv::Vec3b(255, 255, 255);
         }
     }
@@ -648,23 +642,24 @@ int motion_detect(cv::Mat &src, cv::Mat &dst)
 
 // Scans the image horizontally and only updates a thin line of pixels at every frame
 // Has a cool rolling shutter effect
-// Args: 8-bit color src image     Return: 8-bit color dst image
-int horizontal_scan(cv::Mat &src, cv::Mat &dst)
+// Args: 8-bit color src image, slit width (number of columns being updated every frame)
+// Return: 8-bit color dst image
+int horizontal_scan(cv::Mat &src, cv::Mat &dst, int slit_width)
 {
     static cv::Mat prev;
     static int x = 0;
 
     if (prev.empty())
-    {
-        prev.create(src.size(), src.type());
-        prev = cv::Scalar(0, 0, 0);
-    }
+        prev = cv::Mat::zeros(src.size(), src.type());
 
-    int slitWidth = 5;
-    cv::Rect slit(x, 0, slitWidth, src.rows);
+    int safe_width = slit_width;
+    if (x + slit_width > src.cols)
+        safe_width = src.cols - x;
+
+    cv::Rect slit(x, 0, safe_width, src.rows);
     src(slit).copyTo(prev(slit));
 
-    x = (x + slitWidth) % dst.cols;
+    x = (x + safe_width) % dst.cols;
     prev.copyTo(dst);
     cv::line(dst, cv::Point(x, 0), cv::Point(x, dst.rows), cv::Scalar(0, 255, 0), 2);
 
@@ -673,11 +668,12 @@ int horizontal_scan(cv::Mat &src, cv::Mat &dst)
 
 // Creates a motion blur effect by blending the previous frame with the current frame
 // Can adjust the decay rate using the alpha value
-// Args: 8-bit color src image     Return: 8-bit color dst image
-int motion_blur(cv::Mat &src, cv::Mat &dst)
+// Args: 8-bit color src image, blur amount (between 0 and 100)
+// Return: 8-bit color dst image
+int motion_blur(cv::Mat &src, cv::Mat &dst, int blur_amount)
 {
     static cv::Mat prev;
-    float alpha = 0.7; // decay rate for the motion blur frame
+    float alpha = (float)blur_amount / 100.0f; // decay rate for the motion blur frame
 
     // fill the prev image with src initially
     if (prev.empty())
@@ -709,14 +705,14 @@ int motion_blur(cv::Mat &src, cv::Mat &dst)
 // 3 ghost frames that are several frames apart are blended into the image
 // Ghost frames are only updated every nth frame (based on the delay) and slowly decay in transparency
 // Intermittent updates cause the video to be a bit choppy (improved version is shown below)
-// Args: 8-bit color src image     Return: 8-bit color dst image
-int ghost(cv::Mat &src, cv::Mat &dst)
+// Args: 8-bit color src image, frame delay (each ghost frame is delayed by this many frames from one another)
+// Return: 8-bit color dst image
+int ghost(cv::Mat &src, cv::Mat &dst, int frame_delay)
 {
     static cv::Mat prev1;
     static cv::Mat prev2;
     static cv::Mat prev3;
     static int step = 0;
-    int ghostDelay = 3; // each ghost frame is delayed by this many frames from one another
 
     if (prev1.empty())
         src.copyTo(prev1);
@@ -749,7 +745,7 @@ int ghost(cv::Mat &src, cv::Mat &dst)
         prev1.copyTo(prev2);
         dst.copyTo(prev1);
     }
-    step = (step + 1) % ghostDelay;
+    step = (step + 1) % frame_delay;
 
     return (0);
 }
