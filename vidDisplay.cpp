@@ -148,6 +148,7 @@ void updateWindow(char imgType)
 {
     cv::destroyWindow("Live Video");
     cv::namedWindow("Live Video", 0);
+    // image size stays constant every time the window is updated
     cv::resizeWindow("Live Video", 1920, 1080); // manually set the window size to 1080p
 
     switch (imgType)
