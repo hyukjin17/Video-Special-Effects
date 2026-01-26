@@ -88,3 +88,5 @@ Click on the "Live Video" window to ensure it is selected, then press the follow
 * `filter.cpp`: Contains the implementation logic for all image processing functions.
 * `filter.hpp`: Header file declaring the filter functions.
 * `haarcascade_frontalface_alt2.xml`: Pre-trained model required for face detection features.
+* `faceDetect`: Folder containing external code for face detection
+* `DA2Network.hpp`: External Depth Anythinng V2 code for depth detection in image
