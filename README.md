@@ -70,6 +70,7 @@ Click on the "Live Video" window to ensure it is selected, then press the follow
 | Key | Effect | Description |
 | :--- | :--- | :--- |
 | `l` | **Blur & Quantize** | Creates a "cartoon" or posterized effect. |
+| `p` | **Depth Threshold Blur** | Blurs only the background using the Depth Anything V2 Network. |
 | `f` | **Face Detection** | Draws a box around detected faces. |
 | `t` | **Focus Mode** | Grays the background but keeps faces in color. |
 | `1` | **Motion Detect** | Highlights only the pixels that are currently moving. |
