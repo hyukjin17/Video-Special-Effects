@@ -25,3 +25,4 @@ int horizontal_scan(cv::Mat &src, cv::Mat &dst, int slit_width);
 int motion_blur(cv::Mat &src, cv::Mat &dst, int blur_amount);
 int ghost(cv::Mat &src, cv::Mat &dst, int frame_delay);
 int ghost_smooth(cv::Mat &src, cv::Mat &dst);
+int depth_threshold(cv::Mat &src, cv::Mat &dst, cv::Size refS);

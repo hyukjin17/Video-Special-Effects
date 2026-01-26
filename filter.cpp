@@ -8,6 +8,7 @@
 #include <cmath>
 #include "opencv2/opencv.hpp"
 #include "faceDetect/faceDetect.h"
+#include "DA2Network.hpp"
 
 // Convert image to grayscale by manipulating each pixel RGB value
 // Args: color src image     Return: grayscale dst image
@@ -733,8 +734,7 @@ int ghost(cv::Mat &src, cv::Mat &dst, int frame_delay)
         {
             for (int k = 0; k < 3; k++)
             {
-                dstPtr[j][k] = (uchar)(
-                    0.5 * srcPtr[j][k] + 0.25 * prevPtr1[j][k] + 0.15 * prevPtr2[j][k] + 0.1 * prevPtr3[j][k]);
+                dstPtr[j][k] = (uchar)(0.5 * srcPtr[j][k] + 0.25 * prevPtr1[j][k] + 0.15 * prevPtr2[j][k] + 0.1 * prevPtr3[j][k]);
             }
         }
     }
@@ -761,7 +761,7 @@ int ghost_smooth(cv::Mat &src, cv::Mat &dst)
     // need 31 frames to safely access 30 frames back
     static std::vector<cv::Mat> buff;
     static int index = 0; // index keeps track of position in the circular buffer
-    int buffLen = 31; // enough to hold 3 previous ghosts at intervals of 10
+    int buffLen = 31;     // enough to hold 3 previous ghosts at intervals of 10
 
     // fill the buffer initially with the src frame
     if (buff.empty())
@@ -797,14 +797,51 @@ int ghost_smooth(cv::Mat &src, cv::Mat &dst)
         {
             for (int k = 0; k < 3; k++)
             {
-                dstPtr[j][k] = (uchar)(
-                    srcPtr[j][k] * 0.50 + p1Ptr[j][k] * 0.25 + p2Ptr[j][k] * 0.15 + p3Ptr[j][k] * 0.10);
+                dstPtr[j][k] = (uchar)(srcPtr[j][k] * 0.50 + p1Ptr[j][k] * 0.25 + p2Ptr[j][k] * 0.15 + p3Ptr[j][k] * 0.10);
             }
         }
     }
 
     // increments the index and makes sure it wraps around
     index = (index + 1) % buffLen;
+
+    return (0);
+}
+
+// Blurs the background using the depth threshold and a box filter
+int depth_threshold(cv::Mat &src, cv::Mat &dst, cv::Size refS)
+{
+    // make a DANetwork object
+    static DA2Network da_net("model_fp16.onnx");
+    static cv::Mat temp, temp2;
+    src.copyTo(dst);
+
+    // scale factor to input 256p image into the network
+    float scale_factor = 256.0 / refS.height;
+
+    // set the network input
+    da_net.set_input(src, scale_factor);
+    // run the network
+    da_net.run_network(temp, src.size());
+
+    // cv::applyColorMap(temp, temp2, cv::COLORMAP_INFERNO );
+    cv::blur(src, temp2, cv::Size(11, 11)); // 11x11 box filter
+
+    for (int i = 0; i < src.rows; i++)
+    {
+        uchar *tempPtr = temp.ptr<uchar>(i);
+        cv::Vec3b *dstPtr = dst.ptr<cv::Vec3b>(i);
+        cv::Vec3b *temp2Ptr = temp2.ptr<cv::Vec3b>(i);
+
+        for (int j = 0; j < src.cols; j++)
+        {
+            // copy over blurred pixels if its in the background
+            if (tempPtr[j] < 128)
+            {
+                dstPtr[j] = temp2Ptr[j];
+            }
+        }
+    }
 
     return (0);
 }

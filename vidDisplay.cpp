@@ -11,7 +11,7 @@
 
 // Applies the chosen filter to the image
 // Args: filter type, 8-bit color src image     Return: 8-bit filtered dst image
-void applyFilter(char imgType, cv::Mat &src, cv::Mat &dst)
+void applyFilter(char imgType, cv::Mat &src, cv::Mat &dst, cv::Size refS)
 {
     cv::Mat temp, temp2; // temporary frames for transformations
 
@@ -85,6 +85,9 @@ void applyFilter(char imgType, cv::Mat &src, cv::Mat &dst)
         sobelY3x3(src, temp2);
         embossing_2(temp, temp2, dst);
         break;
+    case 'p':
+        depth_threshold(src, dst, refS);
+        break;
     case '1':
         motion_detect(src, dst);
         break;
@@ -132,6 +135,7 @@ bool isValidType(char imgType)
     case 't':        // grayscale with only face in color
     case 'e':        // embossing
     case 'j':        // embossing 2
+    case 'p':        // depth threshold
     case '1':        // motion detect (only movement appears white on screen)
     case '2':        // horizontal scan
     case '3':        // motion blur
@@ -211,7 +215,7 @@ int main(int argc, char *argv[])
         }
 
         // apply the chosen filter and display it in the window
-        applyFilter(imgType, frame, mod);
+        applyFilter(imgType, frame, mod, refS);
         cv::imshow("Live Video", mod);
 
         // see if there is a waiting keystroke
