@@ -809,6 +809,8 @@ int ghost_smooth(cv::Mat &src, cv::Mat &dst)
 }
 
 // Blurs the background using the depth threshold and a box filter
+// Args: 8-bit color src image and image size
+// Return: 8-bit color dst image
 int depth_threshold(cv::Mat &src, cv::Mat &dst, cv::Size refS)
 {
     // make a DANetwork object
