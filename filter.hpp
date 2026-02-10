@@ -4,6 +4,9 @@
     Function signatures for filter functions
 */
 
+#ifndef FILTER_H
+#define FILTER_H
+
 int grayscale(cv::Mat &src, cv::Mat &dst);
 int sepia(cv::Mat &src, cv::Mat &dst);
 int blur5x5_1(cv::Mat &src, cv::Mat &dst);
@@ -26,3 +29,5 @@ int motion_blur(cv::Mat &src, cv::Mat &dst, int blur_amount);
 int ghost(cv::Mat &src, cv::Mat &dst, int frame_delay);
 int ghost_smooth(cv::Mat &src, cv::Mat &dst);
 int depth_threshold(cv::Mat &src, cv::Mat &dst, cv::Size refS);
+
+#endif
