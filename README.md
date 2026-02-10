@@ -19,7 +19,7 @@ A real-time video processing application built with C++ and OpenCV. This project
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/hyukjin17/Video-Special-Effects.git](https://github.com/hyukjin17/Video-Special-Effects.git)
+    git clone https://github.com/hyukjin17/Video-Special-Effects.git
     cd Video-Special-Effects
     ```
 
